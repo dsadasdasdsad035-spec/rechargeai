@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+
+<!-- SPECKIT START -->
+## 当前实现计划
+
+**Feature**: WildAI 订阅助手平台 (`001-wildai-subscription-platform`)  
+**Plan**: [specs/001-wildai-subscription-platform/plan.md](../../specs/001-wildai-subscription-platform/plan.md)  
+**Spec**: [specs/001-wildai-subscription-platform/spec.md](../../specs/001-wildai-subscription-platform/spec.md)
+
+### 技术栈（一期）
+
+| 层级 | 选型 |
+|------|------|
+| 后端 | Java 21, Spring Boot 3.3, JPA, Flyway, MySQL 8, Redis 7 |
+| 用户端 | Vue 3 + TypeScript + Vite + Pinia（H5，`/transaction-record`） |
+| 管理端 | Vue 3 + Element Plus |
+| 架构 | 模块化单体 `com.wildai.*` |
+
+### 一期范围（已澄清）
+
+- ✅ 账户、产品、订单、支付、交易记录
+- ✅ 后台产品/用户管理、订单**只读**（列表/详情/筛选/导出）
+- ❌ 履约任务、退款、通知、审计/RBAC
+
+### 关键规则
+
+- 重复订购：同产品存在 `WAIT_PAY`/`PAID` 订单 → 拒绝
+- 支付成功：订单 `PAID`，**不**创建履约任务
+- 禁止采集第三方 AI 服务密码
+
+### 文档索引
+
+- 研究决策: `specs/001-wildai-subscription-platform/research.md`
+- 数据模型: `specs/001-wildai-subscription-platform/data-model.md`
+- API 契约: `specs/001-wildai-subscription-platform/contracts/`
+- 本地启动: `specs/001-wildai-subscription-platform/quickstart.md`
+
+### 构建命令（规划目标，实现后生效）
+
+```bash
+docker compose up -d mysql redis
+cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+cd frontend-user && pnpm dev
+cd frontend-admin && pnpm dev
+```
+<!-- SPECKIT END -->
+
+## 交互规则
+
+- **语言**: 始终使用中文回复
+- **思考逻辑**: 在给出代码前，先用两句话简述实现思路
+- **精简模式**: 除非我要求，否则不需要解释基础语法
+- **修正**: 如果我提出的需求违反了现有的架构，请直接指出并建议更好的方案
+- **代码注释**: 代码注释和日志输出统一使用中文

@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: WildAI 订阅助手 - 用户端 API（一期）
+  version: 1.0.0
+  description: MVP 一期订单闭环。不含履约、退款、通知接口。
+
+servers:
+  - url: /api
+    description: 用户端 API 前缀
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "0"
+        message:
+          type: string
+        data: {}
+        traceId:
+          type: string
+
+    PageResult:
+      type: object
+      properties:
+        pageNo:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        items:
+          type: array
+          items: {}
+
+paths:
+  /auth/register:
+    post:
+      summary: 用户注册
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credential, verifyCode]
+              properties:
+                type:
+                  type: string
+                  enum: [PHONE, EMAIL]
+                phone:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                verifyCode:
+                  type: string
+      responses:
+        "200":
+          description: 注册成功
+
+  /auth/login:
+    post:
+      summary: 用户登录
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                verifyCode:
+                  type: string
+      responses:
+        "200":
+          description: 返回 accessToken、refreshToken
+
+  /auth/refresh:
+    post:
+      summary: 刷新 Token
+      tags: [Auth]
+
+  /products:
+    get:
+      summary: 上架产品列表
+      tags: [Product]
+      parameters:
+        - name: serviceType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 产品列表
+
+  /products/{id}:
+    get:
+      summary: 产品详情（含规则、合规提示）
+      tags: [Product]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+
+  /orders:
+    get:
+      summary: 交易记录列表
+      tags: [Order]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderStatus
+          in: query
+          schema:
+            type: string
+        - name: paymentStatus
+          in: query
+          schema:
+            type: string
+        - name: serviceType
+          in: query
+          schema:
+            type: string
+        - name: startTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: pageNo
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: 分页订单列表
+
+    post:
+      summary: 创建订单
+      tags: [Order]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, fields]
+              properties:
+                productId:
+                  type: integer
+                fields:
+                  type: object
+                  description: 按产品 required_fields_json 填写，含 target_account
+      responses:
+        "201":
+          description: 订单创建成功，返回 orderNo
+        "409":
+          description: 重复订购或产品不可售
+
+  /orders/{orderNo}:
+    get:
+      summary: 订单详情（脱敏）
+      tags: [Order]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderNo
+          in: path
+          required: true
+          schema:
+            type: string
+
+  /orders/{orderNo}/pay:
+    post:
+      summary: 创建支付单并返回支付参数/二维码
+      tags: [Payment]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channel]
+              properties:
+                channel:
+                  type: string
+                  enum: [WECHAT, ALIPAY]
+      responses:
+        "200":
+          description: 支付参数（codeUrl / qrContent 等）
+
+  /payments/wechat/notify:
+    post:
+      summary: 微信支付回调
+      tags: [PaymentCallback]
+      description: 验签、幂等、更新 PAID
+
+  /payments/alipay/notify:
+    post:
+      summary: 支付宝支付回调
+      tags: [PaymentCallback]
+
+  /users/me:
+    get:
+      summary: 当前用户资料
+      tags: [User]
+      security:
+        - bearerAuth: []
+    put:
+      summary: 更新昵称/头像
+      tags: [User]
+      security:
+        - bearerAuth: []

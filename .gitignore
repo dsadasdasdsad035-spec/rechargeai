@@ -1,0 +1,28 @@
+# Java
+target/
+*.class
+*.jar
+*.war
+*.iml
+.gradle/
+build/
+
+# Node
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Local config
+backend/src/main/resources/application-local.yml

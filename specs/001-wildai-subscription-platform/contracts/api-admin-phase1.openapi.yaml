@@ -1,0 +1,123 @@
+openapi: 3.0.3
+info:
+  title: WildAI 订阅助手 - 管理端 API（一期）
+  version: 1.0.0
+  description: MVP 一期。订单管理只读；产品/用户可写。无 RBAC 细粒度权限。
+
+servers:
+  - url: /admin/api
+    description: 管理端 API 前缀
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /auth/login:
+    post:
+      summary: 管理员登录
+      tags: [Auth]
+
+  /products:
+    get:
+      summary: 产品列表
+      tags: [Product]
+      security: [{ bearerAuth: [] }]
+    post:
+      summary: 新增产品
+      tags: [Product]
+      security: [{ bearerAuth: [] }]
+
+  /products/{id}:
+    get:
+      summary: 产品详情
+      tags: [Product]
+      security: [{ bearerAuth: [] }]
+    put:
+      summary: 编辑产品
+      tags: [Product]
+      security: [{ bearerAuth: [] }]
+
+  /products/{id}/shelf:
+    post:
+      summary: 上架/下架
+      tags: [Product]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [ON_SHELF, OFF_SHELF]
+
+  /orders:
+    get:
+      summary: 订单列表（只读）
+      tags: [Order]
+      security: [{ bearerAuth: [] }]
+      description: 支持 orderNo、userId、productId、orderStatus、paymentStatus、时间范围筛选与分页
+      parameters:
+        - name: orderNo
+          in: query
+          schema: { type: string }
+        - name: userId
+          in: query
+          schema: { type: integer }
+        - name: orderStatus
+          in: query
+          schema: { type: string }
+        - name: paymentStatus
+          in: query
+          schema: { type: string }
+        - name: startTime
+          in: query
+          schema: { type: string, format: date-time }
+        - name: endTime
+          in: query
+          schema: { type: string, format: date-time }
+        - name: pageNo
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20 }
+
+  /orders/export:
+    get:
+      summary: 导出当前筛选订单（CSV）
+      tags: [Order]
+      security: [{ bearerAuth: [] }]
+      description: 一期只读导出，不含状态变更
+
+  /orders/{orderNo}:
+    get:
+      summary: 订单详情（脱敏，只读）
+      tags: [Order]
+      security: [{ bearerAuth: [] }]
+
+  /users:
+    get:
+      summary: 用户列表
+      tags: [User]
+      security: [{ bearerAuth: [] }]
+
+  /users/{id}/status:
+    post:
+      summary: 封禁/解封用户
+      tags: [User]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [NORMAL, DISABLED, LOCKED]
