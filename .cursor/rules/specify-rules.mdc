@@ -37,13 +37,14 @@ alwaysApply: true
 - API 契约: `specs/001-wildai-subscription-platform/contracts/`
 - 本地启动: `specs/001-wildai-subscription-platform/quickstart.md`
 
-### 构建命令（规划目标，实现后生效）
+### 构建命令
 
 ```bash
+# JDK 21+（示例：export JAVA_HOME=.../openjdk-24）
 docker compose up -d mysql redis
-cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
-cd frontend-user && pnpm dev
-cd frontend-admin && pnpm dev
+cd backend && mvn spring-boot:run
+cd frontend-user && npm install --legacy-peer-deps && npm run dev
+cd frontend-admin && npm install --legacy-peer-deps && npm run dev
 ```
 <!-- SPECKIT END -->
 

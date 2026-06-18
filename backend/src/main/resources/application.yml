@@ -37,7 +37,7 @@ wildai:
     user-refresh-expiration-days: 7
     admin-access-expiration-minutes: 480
   aes:
-    secret-key: dGhpcy1pcy0zMi1ieXRlLWFzLWtleSE=
+    secret-key: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
   order:
     expire-minutes: 15
   payment:

@@ -33,7 +33,7 @@ public class JwtTokenProvider {
                 .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(userId))
                 .claim("userNo", userNo)
-                .claim("aud", AUD_USER)
+                .audience().add(AUD_USER).and()
                 .expiration(Date.from(exp))
                 .signWith(key)
                 .compact();
@@ -45,7 +45,7 @@ public class JwtTokenProvider {
                 .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(userId))
                 .claim("type", "refresh")
-                .claim("aud", AUD_USER)
+                .audience().add(AUD_USER).and()
                 .expiration(Date.from(exp))
                 .signWith(key)
                 .compact();
@@ -57,7 +57,7 @@ public class JwtTokenProvider {
                 .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(adminId))
                 .claim("username", username)
-                .claim("aud", AUD_ADMIN)
+                .audience().add(AUD_ADMIN).and()
                 .expiration(Date.from(exp))
                 .signWith(key)
                 .compact();
@@ -68,10 +68,10 @@ public class JwtTokenProvider {
     }
 
     public boolean isUserToken(Claims claims) {
-        return AUD_USER.equals(claims.get("aud", String.class));
+        return claims.getAudience().contains(AUD_USER);
     }
 
     public boolean isAdminToken(Claims claims) {
-        return AUD_ADMIN.equals(claims.get("aud", String.class));
+        return claims.getAudience().contains(AUD_ADMIN);
     }
 }

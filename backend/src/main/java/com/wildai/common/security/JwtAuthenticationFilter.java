@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 Claims claims = jwtTokenProvider.parse(header.substring(7));
-                String aud = claims.get("aud", String.class);
+                String aud = claims.getAudience().stream().findFirst().orElse("");
                 Long id = Long.parseLong(claims.getSubject());
                 String identifier = JwtTokenProvider.AUD_ADMIN.equals(aud)
                         ? claims.get("username", String.class)

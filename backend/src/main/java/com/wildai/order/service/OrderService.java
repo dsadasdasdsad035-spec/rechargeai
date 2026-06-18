@@ -9,7 +9,7 @@ import com.wildai.order.dto.CreateOrderRequest;
 import com.wildai.order.repository.SubscriptionOrderRepository;
 import com.wildai.product.domain.AiServiceProduct;
 import com.wildai.product.service.ProductService;
-import com.wildai.user.service.UserService;
+import com.wildai.user.security.AccountStatusChecker;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,23 +24,23 @@ public class OrderService {
     private final ProductService productService;
     private final DuplicateOrderChecker duplicateOrderChecker;
     private final AesEncryptUtil aesEncryptUtil;
-    private final UserService userService;
+    private final AccountStatusChecker accountStatusChecker;
     private final WildAiProperties properties;
 
     public OrderService(SubscriptionOrderRepository orderRepo, ProductService productService,
                         DuplicateOrderChecker duplicateOrderChecker, AesEncryptUtil aesEncryptUtil,
-                        UserService userService, WildAiProperties properties) {
+                        AccountStatusChecker accountStatusChecker, WildAiProperties properties) {
         this.orderRepo = orderRepo;
         this.productService = productService;
         this.duplicateOrderChecker = duplicateOrderChecker;
         this.aesEncryptUtil = aesEncryptUtil;
-        this.userService = userService;
+        this.accountStatusChecker = accountStatusChecker;
         this.properties = properties;
     }
 
     @Transactional
     public SubscriptionOrder createOrder(Long userId, CreateOrderRequest req) {
-        userService.ensureCanTrade(userId);
+        accountStatusChecker.ensureCanTrade(userId);
         AiServiceProduct product = productService.requireOnShelf(req.productId());
         duplicateOrderChecker.check(userId, product.getId());
         productService.validateOrderFields(product, req.fields());

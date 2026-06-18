@@ -9,6 +9,6 @@ wildai:
   jwt:
     secret: local-dev-secret-key-at-least-32-chars-long!!
   aes:
-    secret-key: dGhpcy1pcy0zMi1ieXRlLWFzLWtleSE=
+    secret-key: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
   payment:
     mock-enabled: true

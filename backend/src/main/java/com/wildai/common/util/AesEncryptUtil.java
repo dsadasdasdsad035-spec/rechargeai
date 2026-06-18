@@ -21,6 +21,9 @@ public class AesEncryptUtil {
 
     public AesEncryptUtil(WildAiProperties properties) {
         this.keyBytes = Base64.getDecoder().decode(properties.getAes().getSecretKey());
+        if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
+            throw new IllegalStateException("AES 密钥长度无效，需 16/24/32 字节");
+        }
     }
 
     public String encrypt(String plainText) {
