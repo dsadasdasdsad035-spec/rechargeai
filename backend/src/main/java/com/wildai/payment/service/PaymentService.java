@@ -12,6 +12,7 @@ import com.wildai.payment.repository.PaymentTransactionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,9 @@ public class PaymentService {
         if (adapter == null || !adapter.verifyCallback(params, rawBody)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "回调验签失败");
         }
+        if (!adapter.isPaidCallback(params)) {
+            return;
+        }
 
         String thirdTradeNo = adapter.extractThirdTradeNo(params);
         if (thirdTradeNo != null) {
@@ -91,7 +95,10 @@ public class PaymentService {
             }
         }
 
-        String paymentNo = params.get("paymentNo");
+        String paymentNo = adapter.extractPaymentNo(params);
+        if (paymentNo == null || paymentNo.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "支付单号缺失");
+        }
         PaymentTransaction payment = paymentRepo.findByPaymentNo(paymentNo)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "支付单不存在"));
 
@@ -103,6 +110,10 @@ public class PaymentService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         if (payment.getAmountDecimal().compareTo(order.getAmount()) != 0) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "支付金额不一致");
+        }
+        BigDecimal paidAmount = adapter.extractPaidAmount(params);
+        if (paidAmount != null && paidAmount.compareTo(order.getAmount()) != 0) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "支付金额不一致");
         }
 

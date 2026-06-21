@@ -12,3 +12,12 @@ wildai:
     secret-key: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
   payment:
     mock-enabled: true
+    xunhupay:
+      # 开启真实虎皮椒支付时改为 false，并通过环境变量或本地 application-local.yml 配置以下值
+      appid: ${XUNHUPAY_APPID:}
+      secret: ${XUNHUPAY_SECRET:}
+      gateway: ${XUNHUPAY_GATEWAY:https://api.xunhupay.com}
+      notify-url: ${XUNHUPAY_NOTIFY_URL:}
+      return-url: ${XUNHUPAY_RETURN_URL:}
+      callback-url: ${XUNHUPAY_CALLBACK_URL:}
+      timeout-seconds: ${XUNHUPAY_TIMEOUT_SECONDS:10}

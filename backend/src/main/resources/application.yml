@@ -41,7 +41,15 @@ wildai:
   order:
     expire-minutes: 15
   payment:
-    mock-enabled: true
+    mock-enabled: ${WILDAI_PAYMENT_MOCK_ENABLED:true}
+    xunhupay:
+      appid: ${XUNHUPAY_APPID:}
+      secret: ${XUNHUPAY_SECRET:}
+      gateway: ${XUNHUPAY_GATEWAY:https://api.xunhupay.com}
+      notify-url: ${XUNHUPAY_NOTIFY_URL:}
+      return-url: ${XUNHUPAY_RETURN_URL:}
+      callback-url: ${XUNHUPAY_CALLBACK_URL:}
+      timeout-seconds: ${XUNHUPAY_TIMEOUT_SECONDS:10}
 
 logging:
   level:

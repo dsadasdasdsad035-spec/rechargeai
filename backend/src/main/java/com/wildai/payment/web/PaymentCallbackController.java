@@ -28,6 +28,12 @@ public class PaymentCallbackController {
         return "success";
     }
 
+    @PostMapping("/xunhupay/notify")
+    public String xunhuPayNotify(@RequestParam Map<String, String> params) {
+        paymentService.handleCallback("XUNHUPAY", params, null);
+        return "success";
+    }
+
     @PostMapping("/mock/notify")
     public Map<String, String> mockNotify(@RequestParam Map<String, String> params) {
         Map<String, String> all = new HashMap<>(params);

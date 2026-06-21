@@ -9,7 +9,7 @@ const router = useRouter()
 const payInfo = ref<Record<string, string>>({})
 
 onMounted(async () => {
-  const { data } = await http.post(`/orders/${route.params.orderNo}/pay`, { channel: 'WECHAT' })
+  const { data } = await http.post(`/orders/${route.params.orderNo}/pay`, { channel: 'XUNHUPAY' })
   payInfo.value = data.data
 })
 

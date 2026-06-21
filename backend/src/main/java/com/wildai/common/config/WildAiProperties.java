@@ -49,7 +49,36 @@ public class WildAiProperties {
 
     public static class Payment {
         private boolean mockEnabled = true;
+        private XunhuPay xunhupay = new XunhuPay();
+
         public boolean isMockEnabled() { return mockEnabled; }
         public void setMockEnabled(boolean mockEnabled) { this.mockEnabled = mockEnabled; }
+        public XunhuPay getXunhupay() { return xunhupay; }
+        public void setXunhupay(XunhuPay xunhupay) { this.xunhupay = xunhupay; }
+
+        public static class XunhuPay {
+            private String appid;
+            private String secret;
+            private String gateway = "https://api.xunhupay.com";
+            private String notifyUrl;
+            private String returnUrl;
+            private String callbackUrl;
+            private int timeoutSeconds = 10;
+
+            public String getAppid() { return appid; }
+            public void setAppid(String appid) { this.appid = appid; }
+            public String getSecret() { return secret; }
+            public void setSecret(String secret) { this.secret = secret; }
+            public String getGateway() { return gateway; }
+            public void setGateway(String gateway) { this.gateway = gateway; }
+            public String getNotifyUrl() { return notifyUrl; }
+            public void setNotifyUrl(String notifyUrl) { this.notifyUrl = notifyUrl; }
+            public String getReturnUrl() { return returnUrl; }
+            public void setReturnUrl(String returnUrl) { this.returnUrl = returnUrl; }
+            public String getCallbackUrl() { return callbackUrl; }
+            public void setCallbackUrl(String callbackUrl) { this.callbackUrl = callbackUrl; }
+            public int getTimeoutSeconds() { return timeoutSeconds; }
+            public void setTimeoutSeconds(int timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
+        }
     }
 }
