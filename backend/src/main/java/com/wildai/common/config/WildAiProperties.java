@@ -8,6 +8,7 @@ public class WildAiProperties {
     private Jwt jwt = new Jwt();
     private Aes aes = new Aes();
     private Order order = new Order();
+    private Mail mail = new Mail();
     private Payment payment = new Payment();
 
     public Jwt getJwt() { return jwt; }
@@ -16,6 +17,8 @@ public class WildAiProperties {
     public void setAes(Aes aes) { this.aes = aes; }
     public Order getOrder() { return order; }
     public void setOrder(Order order) { this.order = order; }
+    public Mail getMail() { return mail; }
+    public void setMail(Mail mail) { this.mail = mail; }
     public Payment getPayment() { return payment; }
     public void setPayment(Payment payment) { this.payment = payment; }
 
@@ -45,6 +48,16 @@ public class WildAiProperties {
         private int expireMinutes = 15;
         public int getExpireMinutes() { return expireMinutes; }
         public void setExpireMinutes(int expireMinutes) { this.expireMinutes = expireMinutes; }
+    }
+
+    public static class Mail {
+        private boolean enabled = false;
+        private String from = "WildAI <noreply@wildai.local>";
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public String getFrom() { return from; }
+        public void setFrom(String from) { this.from = from; }
     }
 
     public static class Payment {

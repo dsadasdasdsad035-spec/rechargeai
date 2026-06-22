@@ -1,0 +1,84 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: wildai-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: wildai
+      MYSQL_USER: wildai
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - wildai-mysql-data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=128M
+      --max-connections=50
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: wildai-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    volumes:
+      - wildai-redis-data:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: wildai-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wildai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: wildai
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      WILDAI_JWT_SECRET: ${JWT_SECRET}
+      WILDAI_AES_SECRET_KEY: ${AES_SECRET_KEY}
+      WILDAI_PAYMENT_MOCK_ENABLED: ${WILDAI_PAYMENT_MOCK_ENABLED:-true}
+      XUNHUPAY_APPID: ${XUNHUPAY_APPID:-}
+      XUNHUPAY_SECRET: ${XUNHUPAY_SECRET:-}
+      XUNHUPAY_GATEWAY: ${XUNHUPAY_GATEWAY:-https://api.xunhupay.com}
+      XUNHUPAY_NOTIFY_URL: ${XUNHUPAY_NOTIFY_URL:-http://rechargeai.cn/api/payments/xunhupay/notify}
+      XUNHUPAY_RETURN_URL: ${XUNHUPAY_RETURN_URL:-http://rechargeai.cn/transaction-record}
+      XUNHUPAY_CALLBACK_URL: ${XUNHUPAY_CALLBACK_URL:-http://rechargeai.cn/transaction-record}
+      XUNHUPAY_TIMEOUT_SECONDS: ${XUNHUPAY_TIMEOUT_SECONDS:-10}
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_HOST: ${MAIL_HOST:-smtp.qq.com}
+      MAIL_PORT: ${MAIL_PORT:-465}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-WildAI <noreply@rechargeai.cn>}
+    expose:
+      - "8080"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: wildai-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./html/user:/usr/share/nginx/html/user:ro
+      - ./html/admin:/usr/share/nginx/html/admin:ro
+
+volumes:
+  wildai-mysql-data:
+  wildai-redis-data:

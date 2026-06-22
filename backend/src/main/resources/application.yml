@@ -20,6 +20,20 @@ spring:
     redis:
       host: localhost
       port: 6379
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          starttls:
+            enable: false
 
 server:
   port: 8080
@@ -40,6 +54,9 @@ wildai:
     secret-key: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
   order:
     expire-minutes: 15
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:WildAI <noreply@wildai.local>}
   payment:
     mock-enabled: ${WILDAI_PAYMENT_MOCK_ENABLED:true}
     xunhupay:

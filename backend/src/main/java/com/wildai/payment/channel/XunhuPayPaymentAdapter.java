@@ -3,6 +3,7 @@ package com.wildai.payment.channel;
 import com.wildai.common.config.WildAiProperties;
 import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +31,7 @@ public class XunhuPayPaymentAdapter implements PaymentChannelAdapter {
     private final Clock clock;
     private final Supplier<String> nonceSupplier;
 
+    @Autowired
     public XunhuPayPaymentAdapter(WildAiProperties properties, RestTemplateBuilder restTemplateBuilder) {
         this(properties,
                 restTemplateBuilder

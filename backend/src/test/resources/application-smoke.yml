@@ -1,0 +1,20 @@
+spring:
+  mail:
+    host: localhost
+    port: 1025
+    username: smoke
+    password: smoke
+
+wildai:
+  jwt:
+    secret: smoke-test-jwt-secret-must-be-long-enough!!
+  aes:
+    secret-key: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+  mail:
+    enabled: false
+  payment:
+    mock-enabled: true
+
+logging:
+  level:
+    com.wildai: WARN

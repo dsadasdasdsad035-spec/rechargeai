@@ -54,6 +54,24 @@ public class AuthService {
             userRepo.save(user);
             return tokens(user);
         }
+        if ("EMAIL".equalsIgnoreCase(req.type())) {
+            if (req.email() == null || req.email().isBlank()) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "邮箱不能为空");
+            }
+            verifyCodeService.requireEmail(req.email());
+            if (!verifyCodeService.verify(req.email(), req.verifyCode())) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "验证码错误");
+            }
+            if (userRepo.findByEmail(req.email()).isPresent()) {
+                throw new BusinessException(ErrorCode.CONFLICT, "邮箱已注册");
+            }
+            UserAccount user = new UserAccount();
+            user.setUserNo("U" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+            user.setEmail(req.email());
+            user.setNickname(req.email().split("@")[0]);
+            userRepo.save(user);
+            return tokens(user);
+        }
         if (req.email() == null || req.password() == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "邮箱和密码不能为空");
         }

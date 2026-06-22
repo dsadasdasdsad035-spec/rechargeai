@@ -1,43 +1,125 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import BaseButton from '../components/ui/BaseButton.vue'
+import BaseInput from '../components/ui/BaseInput.vue'
+import BaseCard from '../components/ui/BaseCard.vue'
 
 const phone = ref('')
 const code = ref('')
 const auth = useAuthStore()
 const router = useRouter()
 const devCode = ref('')
+const sending = ref(false)
+const submitting = ref(false)
 
 async function sendCode() {
-  const res = await auth.sendCode(phone.value)
-  devCode.value = res.data.data.devCode
+  sending.value = true
+  try {
+    const res = await auth.sendCode(phone.value)
+    devCode.value = res.data.data.devCode
+  } finally {
+    sending.value = false
+  }
 }
 
 async function submit() {
-  await auth.loginPhone(phone.value, code.value)
-  router.push('/products')
+  submitting.value = true
+  try {
+    await auth.loginPhone(phone.value, code.value)
+    router.push('/products')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
 <template>
-  <div class="card">
-    <h2>登录</h2>
-    <input v-model="phone" placeholder="手机号" />
-    <div class="row">
-      <input v-model="code" placeholder="验证码" />
-      <button @click="sendCode">获取验证码</button>
-    </div>
-    <p v-if="devCode" class="hint">开发验证码：{{ devCode }}</p>
-    <button class="primary" @click="submit">登录</button>
-    <p><router-link to="/register">去注册</router-link></p>
+  <div class="page auth-page">
+    <BaseCard class="auth-card">
+      <header class="auth-header">
+        <h2>登录</h2>
+        <p>使用手机号验证码登录您的账户</p>
+      </header>
+
+      <form class="auth-form" @submit.prevent="submit">
+        <BaseInput v-model="phone" label="手机号" type="tel" placeholder="请输入手机号" />
+        <div class="code-row">
+          <BaseInput v-model="code" label="验证码" placeholder="请输入验证码" />
+          <BaseButton type="button" variant="secondary" :disabled="sending" @click="sendCode">
+            {{ sending ? '发送中…' : '获取验证码' }}
+          </BaseButton>
+        </div>
+        <p v-if="devCode" class="hint">开发验证码：{{ devCode }}</p>
+        <BaseButton type="submit" block :disabled="submitting">
+          {{ submitting ? '登录中…' : '登录' }}
+        </BaseButton>
+      </form>
+
+      <p class="auth-footer">
+        还没有账户？
+        <RouterLink to="/register">去注册</RouterLink>
+      </p>
+    </BaseCard>
   </div>
 </template>
 
 <style scoped>
-.card { max-width: 360px; margin: 40px auto; display: flex; flex-direction: column; gap: 12px; }
-input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-.row { display: flex; gap: 8px; }
-.primary { background: #1677ff; color: #fff; border: none; padding: 10px; border-radius: 6px; }
-.hint { color: #888; font-size: 12px; }
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: var(--space-2xl);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-header {
+  margin-bottom: var(--space-lg);
+}
+
+.auth-header p {
+  margin-top: var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.code-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+@media (min-width: 400px) {
+  .code-row {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .code-row :deep(.field) {
+    flex: 1;
+  }
+}
+
+.hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-subtle);
+}
+
+.auth-footer {
+  margin-top: var(--space-lg);
+  text-align: center;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
 </style>
