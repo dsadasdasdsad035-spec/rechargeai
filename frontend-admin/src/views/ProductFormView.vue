@@ -10,6 +10,7 @@ const submitting = ref(false)
 
 const form = ref({
   name: '',
+  serviceType: 'GENERAL',
   salePrice: 0,
   periodDays: 30,
   currency: 'CNY',
@@ -26,6 +27,8 @@ async function submit() {
     await http.post('/products', form.value)
     ElMessage.success('产品已创建')
     router.push('/products')
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message ?? '创建失败，请稍后重试')
   } finally {
     submitting.value = false
   }
@@ -46,6 +49,13 @@ async function submit() {
       <el-form label-width="100px" label-position="top">
         <el-form-item label="名称" required>
           <el-input v-model="form.name" placeholder="如 ChatGPT Plus 月度" />
+        </el-form-item>
+        <el-form-item label="服务类型">
+          <el-select v-model="form.serviceType" style="width: 100%">
+            <el-option label="ChatGPT" value="CHATGPT" />
+            <el-option label="Claude" value="CLAUDE" />
+            <el-option label="通用" value="GENERAL" />
+          </el-select>
         </el-form-item>
         <el-form-item label="售价（元）">
           <el-input-number v-model="form.salePrice" :min="0" :precision="2" style="width: 100%" />

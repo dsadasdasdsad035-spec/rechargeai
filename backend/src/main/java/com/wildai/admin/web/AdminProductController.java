@@ -29,8 +29,7 @@ public class AdminProductController {
 
     @PostMapping
     public ApiResponse<AiServiceProduct> create(@RequestBody AiServiceProduct product) {
-        product.setId(null);
-        return ApiResponse.ok(productService.save(product));
+        return ApiResponse.ok(productService.create(product));
     }
 
     @PutMapping("/{id}")

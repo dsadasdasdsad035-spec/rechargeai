@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 一期冒烟测试：邮箱注册 + Mock 支付闭环。
+ * 一期冒烟测试：邮箱注册 + 管理端新建产品 + Mock 支付闭环。
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -78,8 +78,24 @@ class Phase1SmokeIT {
     }
 
     @Test
-    @DisplayName("Mock 支付：注册 → 下单 → 支付 → 回调 → 订单已支付")
+    @DisplayName("管理端：登录 → 新建产品 → 上架")
+    void adminCreateProductSmoke() throws Exception {
+        String adminToken = adminLogin();
+        long productId = createAndShelfProduct(adminToken, "冒烟产品-" + System.currentTimeMillis());
+
+        mockMvc.perform(get("/api/products/" + productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.status").value("ON_SHELF"))
+                .andExpect(jsonPath("$.data.name").isNotEmpty());
+    }
+
+    @Test
+    @DisplayName("Mock 支付：注册 → 新建产品 → 下单 → 支付 → 回调 → 订单已支付")
     void mockPaymentSmoke() throws Exception {
+        String adminToken = adminLogin();
+        long productId = createAndShelfProduct(adminToken, "支付冒烟-" + System.currentTimeMillis());
+
         String email = "pay-" + System.currentTimeMillis() + "@example.com";
         String code = sendEmailCode(email);
 
@@ -98,8 +114,8 @@ class Phase1SmokeIT {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"productId":1,"fields":{"target_account":"ai-user@example.com"}}
-                                """))
+                                {"productId":%d,"fields":{"target_account":"ai-user@example.com"}}
+                                """.formatted(productId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderNo").isNotEmpty())
                 .andReturn();
@@ -129,6 +145,45 @@ class Phase1SmokeIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderStatus").value("PAID"))
                 .andExpect(jsonPath("$.data.paymentStatus").value("PAID"));
+    }
+
+    private String adminLogin() throws Exception {
+        MvcResult login = mockMvc.perform(post("/admin/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"admin\",\"password\":\"changeme\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andReturn();
+
+        return objectMapper.readTree(login.getResponse().getContentAsString())
+                .get("data").get("accessToken").asText();
+    }
+
+    private long createAndShelfProduct(String adminToken, String name) throws Exception {
+        MvcResult create = mockMvc.perform(post("/admin/api/products")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"%s","salePrice":99.00,"periodDays":30,"currency":"CNY","serviceType":"GENERAL"}
+                                """.formatted(name)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.productCode").isNotEmpty())
+                .andReturn();
+
+        long productId = objectMapper.readTree(create.getResponse().getContentAsString())
+                .get("data").get("id").asLong();
+
+        mockMvc.perform(post("/admin/api/products/" + productId + "/shelf")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"ON_SHELF\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"));
+
+        return productId;
     }
 
     private String sendEmailCode(String email) throws Exception {

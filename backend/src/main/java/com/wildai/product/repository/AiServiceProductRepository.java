@@ -8,4 +8,5 @@ import java.util.List;
 public interface AiServiceProductRepository extends JpaRepository<AiServiceProduct, Long> {
     List<AiServiceProduct> findByStatusOrderBySortOrderAsc(String status);
     List<AiServiceProduct> findAllByOrderBySortOrderAsc();
+    boolean existsByProductCode(String productCode);
 }
