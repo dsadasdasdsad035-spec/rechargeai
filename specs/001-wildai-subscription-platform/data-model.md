@@ -1,9 +1,11 @@
 # Data Model: RechargeAi 订阅助手平台
 
-**Date**: 2026-06-17  
+**Date**: 2026-06-17（更新 2026-06-23：三期资金表、SUCCESS 结算口径）  
 **Phase 1 Tables**: `user_account`, `ai_service_product`, `subscription_order`, `payment_transaction`, `admin_user`（一期简化后台账号）
 
 **Phase 2+ Tables** (designed, not implemented in Phase 1): `fulfillment_task`, `fulfillment_log`, `refund_request`, `admin_operation_log`, `outbox_event`
+
+**Phase 3 Tables** (designed, see spec.md §平台资金与提现): `platform_ledger_entry`, `withdrawal_request`, `payout_account`
 
 ---
 
@@ -112,7 +114,7 @@ UNPAID/PAYING → PAY_FAILED
 
 ### 重复订购规则
 
-存在 `user_id + product_id` 且 `order_status IN ('WAIT_PAY','PAID')` 的订单 → 拒绝新单（FR-011）
+存在 `user_id + product_id` 且 `order_status IN ('WAIT_PAY','PAID','FULFILLING')` 的订单 → 拒绝新单（FR-011；二期起 `FULFILLING` 视为进行中）
 
 ---
 
@@ -165,6 +167,20 @@ UNPAID/PAYING → PAY_FAILED
 ### admin_operation_log
 
 强制改状态、退款、封禁等敏感操作审计（二期 RBAC 启用）。
+
+### platform_ledger_entry（三期）
+
+平台资金流水；事件类型：`SETTLE`（履约成功结算）/ `REFUND` / `WITHDRAW_FREEZE` / `WITHDRAW_RELEASE` / `WITHDRAW_COMPLETE`。  
+可提现余额由流水聚合：`order_status = SUCCESS` 订单累计实收 - 已退款 - 提现冻结 - 已提现（`PAID`/履约中不计入）。
+
+### withdrawal_request（三期）
+
+提现单；状态：`PENDING_APPROVAL` → `APPROVED` | `REJECTED` | `CANCELLED` → `COMPLETED` | `PAYOUT_TIMEOUT`。  
+MUST 关联 `payout_account_id`；详见 [spec.md](./spec.md)（User Story 11–13、FR-040–FR-052）。
+
+### payout_account（三期）
+
+平台提现收款账户；超管维护，财务创建提现时必选。字段含：户名、开户行、账号（加密）、启用状态、`created_at`/`updated_at`。
 
 ---
 

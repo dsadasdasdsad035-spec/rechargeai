@@ -1,10 +1,16 @@
 package com.wildai.order.dto;
 
+import com.wildai.fulfillment.dto.FulfillmentLogDto;
+
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 public record OrderDetailDto(
         String orderNo, Long productId, String productName, BigDecimal amount, String currency,
         String targetAccountMasked, String orderStatus, String paymentStatus, String fulfillmentStatus,
-        String thirdTradeNoMasked, Instant createdAt, Instant paidAt, Instant expiredAt
+        String thirdTradeNoMasked, Instant createdAt, Instant paidAt, Instant expiredAt,
+        String fulfillmentTaskNo, String fulfillmentTaskStatus,
+        Instant subscriptionStart, Instant subscriptionEnd,
+        List<FulfillmentLogDto> fulfillmentLogs
 ) {}

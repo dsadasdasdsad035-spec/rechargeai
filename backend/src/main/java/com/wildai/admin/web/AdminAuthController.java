@@ -2,6 +2,7 @@ package com.wildai.admin.web;
 
 import com.wildai.admin.domain.AdminUser;
 import com.wildai.admin.repository.AdminUserRepository;
+import com.wildai.admin.service.RbacService;
 import com.wildai.common.dto.ApiResponse;
 import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
@@ -18,22 +19,29 @@ public class AdminAuthController {
     private final AdminUserRepository adminRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RbacService rbacService;
 
     public AdminAuthController(AdminUserRepository adminRepo, PasswordEncoder passwordEncoder,
-                               JwtTokenProvider jwtTokenProvider) {
+                               JwtTokenProvider jwtTokenProvider, RbacService rbacService) {
         this.adminRepo = adminRepo;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.rbacService = rbacService;
     }
 
     @PostMapping("/login")
-    public ApiResponse<Map<String, String>> login(@RequestBody Map<String, String> body) {
+    public ApiResponse<Map<String, Object>> login(@RequestBody Map<String, String> body) {
         AdminUser admin = adminRepo.findByUsername(body.get("username"))
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "用户名或密码错误"));
         if (!passwordEncoder.matches(body.get("password"), admin.getPasswordHash())) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户名或密码错误");
         }
-        String token = jwtTokenProvider.createAdminAccessToken(admin.getId(), admin.getUsername());
-        return ApiResponse.ok(Map.of("accessToken", token, "username", admin.getUsername()));
+        var roles = rbacService.getRoleCodes(admin.getId());
+        String token = jwtTokenProvider.createAdminAccessToken(admin.getId(), admin.getUsername(), roles);
+        return ApiResponse.ok(Map.of(
+                "accessToken", token,
+                "username", admin.getUsername(),
+                "roles", roles
+        ));
     }
 }

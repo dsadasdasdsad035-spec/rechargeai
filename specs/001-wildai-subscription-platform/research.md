@@ -154,3 +154,76 @@
 | 退款 | 二期；仅履约失败 + 全额 |
 | 数据库选型 | MySQL 8 |
 | 架构 | 模块化单体 |
+
+---
+
+## 13. 可提现余额与订单状态（Session 2026-06-23）
+
+**Decision**: 仅 `order_status = SUCCESS`（履约成功）订单实收计入可提现池；`PAID`/履约中、退款中均不计入。
+
+**Rationale**:
+- 防止履约完成前出金，保护用户资金安全
+- 与现有 `data-model.md` 二期状态机 `SUCCESS` 枚举一致（代码一期尚未实现该状态）
+
+**Alternatives considered**:
+- 全部 `PAID` 即可提现：资金风险高，已拒绝
+- T+N 天自动结算：与履约结果脱钩，已拒绝
+
+---
+
+## 14. 退款审批角色（Session 2026-06-23）
+
+**Decision**: 运营管理员与财务角色均可审核退款（同等权限）；客服与只读审计不可审批。
+
+**Rationale**: 中小团队运营需参与售后；仍通过 RBAC 限制客服/审计。
+
+**Alternatives considered**:
+- 仅财务：职责过窄，运营无法闭环售后
+
+---
+
+## 15. 提现收款账户（Session 2026-06-23）
+
+**Decision**: 提现申请必须从超管维护的 `PayoutAccount` 预设列表选择；不支持临时手填。
+
+**Rationale**: 降低录错账号风险；超管集中维护收款信息。
+
+**Alternatives considered**:
+- 每次手填：灵活但易错
+- 预设+手填并存：规范性与灵活性折中，用户选择预设唯一
+
+---
+
+## 16. 运营统计收入口径（Session 2026-06-23）
+
+**Decision**: FR-036 收入指标仅统计 `order_status = SUCCESS` 订单，与资金概览/可提现口径一致。
+
+**Rationale**: 避免运营看板与财务可提现金额不一致。
+
+**Alternatives considered**:
+- 同时展示 PAID 总额与 SUCCESS 结算额：信息更丰富，用户选择仅 SUCCESS
+
+---
+
+## 17. 订单 vs 提现状态枚举（Session 2026-06-23）
+
+**Decision**: 订单履约成功使用 `order_status = SUCCESS`；`COMPLETED` 仅用于提现单等业务对象。
+
+**Rationale**: 对齐 `data-model.md` 与一期代码已有 `PAID`/`CLOSED` 命名风格；避免跨实体枚举冲突。
+
+**Alternatives considered**:
+- 订单也用 `COMPLETED`：与 data-model 及现有设计不一致
+
+---
+
+## 18. 平台资金与提现实现（三期）
+
+**Decision**:
+- 事件驱动账本：`SETTLE`（SUCCESS）、`REFUND`、`WITHDRAW_*`
+- 三期手动打款登记，不对接渠道提现 API（四期评估）
+- 财务申请 → 超管审批 → 财务确认打款
+
+**Rationale**: 虎皮椒等聚合渠道无统一提现 API；人工登记满足合规留痕。
+
+**Alternatives considered**:
+- 渠道自动提现：三期复杂度高，延至四期

@@ -36,6 +36,9 @@ services:
       dockerfile: Dockerfile.backend
     container_name: wildai-backend
     restart: unless-stopped
+    volumes:
+      # 发布时仅替换 JAR 并重启容器，避免每次 podman build 耗时过长
+      - ./wildai-backend-0.1.0-SNAPSHOT.jar:/app/app.jar:ro,Z
     depends_on:
       mysql:
         condition: service_healthy

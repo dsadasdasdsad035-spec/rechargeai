@@ -22,12 +22,23 @@ alwaysApply: true
 
 - ✅ 账户、产品、订单、支付、交易记录
 - ✅ 后台产品/用户管理、订单**只读**（列表/详情/筛选/导出）
-- ❌ 履约任务、退款、通知、审计/RBAC
+- ❌ 履约任务、退款、通知、审计/RBAC、资金提现
+
+### 二期范围（规划）
+
+- 履约任务与日志、退款（运营+财务可审）、通知 Outbox
+- RBAC + 审计日志；`order_status` 扩展至 `SUCCESS`/`FAILED`
+
+### 三期范围（规划）
+
+- 平台账本（`SUCCESS` 结算）、资金概览、提现申请/审批/打款
+- `PayoutAccount` 预设收款账户；契约见 `contracts/api-admin-phase3.openapi.yaml`
 
 ### 关键规则
 
-- 重复订购：同产品存在 `WAIT_PAY`/`PAID` 订单 → 拒绝
-- 支付成功：订单 `PAID`，**不**创建履约任务
+- 重复订购：同产品存在 `WAIT_PAY`/`PAID`（二期含 `FULFILLING`）→ 拒绝
+- 支付成功：一期订单止于 `PAID`；二期起创建履约任务
+- 可提现：仅 `order_status = SUCCESS` 订单计入（三期）
 - 禁止采集第三方 AI 服务密码
 
 ### 文档索引

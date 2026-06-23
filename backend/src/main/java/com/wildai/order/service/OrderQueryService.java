@@ -5,6 +5,9 @@ import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
 import com.wildai.common.util.AesEncryptUtil;
 import com.wildai.common.util.DesensitizeUtil;
+import com.wildai.fulfillment.dto.FulfillmentLogDto;
+import com.wildai.fulfillment.repository.FulfillmentLogRepository;
+import com.wildai.fulfillment.repository.FulfillmentTaskRepository;
 import com.wildai.order.domain.SubscriptionOrder;
 import com.wildai.order.dto.OrderDetailDto;
 import com.wildai.order.dto.OrderSummaryDto;
@@ -16,6 +19,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -26,13 +31,19 @@ public class OrderQueryService {
     private final AiServiceProductRepository productRepo;
     private final PaymentTransactionRepository paymentRepo;
     private final AesEncryptUtil aesEncryptUtil;
+    private final FulfillmentTaskRepository fulfillmentTaskRepo;
+    private final FulfillmentLogRepository fulfillmentLogRepo;
 
     public OrderQueryService(SubscriptionOrderRepository orderRepo, AiServiceProductRepository productRepo,
-                             PaymentTransactionRepository paymentRepo, AesEncryptUtil aesEncryptUtil) {
+                             PaymentTransactionRepository paymentRepo, AesEncryptUtil aesEncryptUtil,
+                             FulfillmentTaskRepository fulfillmentTaskRepo,
+                             FulfillmentLogRepository fulfillmentLogRepo) {
         this.orderRepo = orderRepo;
         this.productRepo = productRepo;
         this.paymentRepo = paymentRepo;
         this.aesEncryptUtil = aesEncryptUtil;
+        this.fulfillmentTaskRepo = fulfillmentTaskRepo;
+        this.fulfillmentLogRepo = fulfillmentLogRepo;
     }
 
     public PageResult<OrderSummaryDto> listUserOrders(Long userId, String orderStatus, String paymentStatus,
@@ -80,9 +91,28 @@ public class OrderQueryService {
                 .map(PaymentTransaction::getThirdTradeNo)
                 .map(DesensitizeUtil::tradeNo)
                 .orElse(null);
+
+        var taskOpt = fulfillmentTaskRepo.findByOrderId(order.getId());
+        String taskNo = null;
+        String taskStatus = null;
+        Instant subStart = null;
+        Instant subEnd = null;
+        List<FulfillmentLogDto> logs = Collections.emptyList();
+        if (taskOpt.isPresent()) {
+            var task = taskOpt.get();
+            taskNo = task.getTaskNo();
+            taskStatus = task.getStatus();
+            subStart = task.getSubscriptionStart();
+            subEnd = task.getSubscriptionEnd();
+            logs = fulfillmentLogRepo.findByTaskIdAndUserVisibleTrueOrderByCreatedAtAsc(task.getId()).stream()
+                    .map(l -> new FulfillmentLogDto(l.getLogType(), l.getContent(), l.getCreatedAt()))
+                    .toList();
+        }
+
         return new OrderDetailDto(order.getOrderNo(), order.getProductId(), productName,
                 order.getAmount(), order.getCurrency(), account,
                 order.getOrderStatus(), order.getPaymentStatus(), order.getFulfillmentStatus(),
-                tradeMasked, order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt());
+                tradeMasked, order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt(),
+                taskNo, taskStatus, subStart, subEnd, logs);
     }
 }

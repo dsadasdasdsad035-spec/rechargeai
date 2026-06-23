@@ -4,6 +4,7 @@ import com.wildai.common.config.WildAiProperties;
 import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
 import com.wildai.common.util.AesEncryptUtil;
+import com.wildai.fulfillment.service.FulfillmentCreationService;
 import com.wildai.order.domain.SubscriptionOrder;
 import com.wildai.order.dto.CreateOrderRequest;
 import com.wildai.order.repository.SubscriptionOrderRepository;
@@ -25,16 +26,20 @@ public class OrderService {
     private final DuplicateOrderChecker duplicateOrderChecker;
     private final AesEncryptUtil aesEncryptUtil;
     private final AccountStatusChecker accountStatusChecker;
+    private final FulfillmentCreationService fulfillmentCreationService;
     private final WildAiProperties properties;
 
     public OrderService(SubscriptionOrderRepository orderRepo, ProductService productService,
                         DuplicateOrderChecker duplicateOrderChecker, AesEncryptUtil aesEncryptUtil,
-                        AccountStatusChecker accountStatusChecker, WildAiProperties properties) {
+                        AccountStatusChecker accountStatusChecker,
+                        FulfillmentCreationService fulfillmentCreationService,
+                        WildAiProperties properties) {
         this.orderRepo = orderRepo;
         this.productService = productService;
         this.duplicateOrderChecker = duplicateOrderChecker;
         this.aesEncryptUtil = aesEncryptUtil;
         this.accountStatusChecker = accountStatusChecker;
+        this.fulfillmentCreationService = fulfillmentCreationService;
         this.properties = properties;
     }
 
@@ -76,10 +81,7 @@ public class OrderService {
 
     @Transactional
     public void markPaid(SubscriptionOrder order) {
-        order.setOrderStatus("PAID");
-        order.setPaymentStatus("PAID");
-        order.setPaidAt(Instant.now());
-        orderRepo.save(order);
+        fulfillmentCreationService.createFromPaidOrder(order);
     }
 
     @Transactional

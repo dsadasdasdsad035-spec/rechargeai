@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -51,12 +52,13 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createAdminAccessToken(Long adminId, String username) {
+    public String createAdminAccessToken(Long adminId, String username, List<String> roles) {
         Instant exp = Instant.now().plus(properties.getJwt().getAdminAccessExpirationMinutes(), ChronoUnit.MINUTES);
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(adminId))
                 .claim("username", username)
+                .claim("roles", roles)
                 .audience().add(AUD_ADMIN).and()
                 .expiration(Date.from(exp))
                 .signWith(key)

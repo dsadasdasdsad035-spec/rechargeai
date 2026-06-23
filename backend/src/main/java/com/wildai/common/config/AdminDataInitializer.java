@@ -1,5 +1,7 @@
 package com.wildai.common.config;
 
+import com.wildai.admin.service.AdminRoleCode;
+import com.wildai.admin.service.RbacService;
 import com.wildai.admin.domain.AdminUser;
 import com.wildai.admin.repository.AdminUserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -11,16 +13,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class AdminDataInitializer {
 
     @Bean
-    CommandLineRunner initAdmin(AdminUserRepository repo, PasswordEncoder encoder) {
+    CommandLineRunner initAdmin(AdminUserRepository repo, PasswordEncoder encoder, RbacService rbacService) {
         return args -> {
-            if (repo.findByUsername("admin").isEmpty()) {
-                AdminUser admin = new AdminUser();
-                admin.setUsername("admin");
-                admin.setPasswordHash(encoder.encode("changeme"));
-                admin.setDisplayName("超级管理员");
-                admin.setStatus("ACTIVE");
-                repo.save(admin);
-            }
+            AdminUser admin = repo.findByUsername("admin").orElseGet(() -> {
+                AdminUser created = new AdminUser();
+                created.setUsername("admin");
+                created.setPasswordHash(encoder.encode("changeme"));
+                created.setDisplayName("超级管理员");
+                created.setStatus("ACTIVE");
+                return repo.save(created);
+            });
+            rbacService.assignRoleIfAbsent(admin.getId(), AdminRoleCode.SUPER_ADMIN);
         };
     }
 }

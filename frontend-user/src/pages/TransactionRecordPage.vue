@@ -70,7 +70,9 @@ onMounted(load)
         <select v-model="orderStatus" class="filter__select" @change="load">
           <option value="">全部</option>
           <option value="WAIT_PAY">待支付</option>
-          <option value="PAID">已支付</option>
+          <option value="FULFILLING">履约中</option>
+          <option value="SUCCESS">已完成</option>
+          <option value="FAILED">履约失败</option>
           <option value="CLOSED">已关闭</option>
         </select>
       </label>

@@ -1,5 +1,10 @@
 package com.wildai.smoke;
 
+import com.wildai.fulfillment.domain.FulfillmentTask;
+import com.wildai.fulfillment.repository.FulfillmentTaskRepository;
+import com.wildai.notify.repository.OutboxEventRepository;
+import com.wildai.order.domain.SubscriptionOrder;
+import com.wildai.order.repository.SubscriptionOrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 一期冒烟测试：邮箱注册 + 管理端新建产品 + Mock 支付闭环。
+ * 平台冒烟测试：一期支付闭环 + 二期履约/RBAC。
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -55,6 +60,15 @@ class Phase1SmokeIT {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @Autowired
+    FulfillmentTaskRepository fulfillmentTaskRepo;
+
+    @Autowired
+    SubscriptionOrderRepository orderRepo;
+
+    @Autowired
+    OutboxEventRepository outboxEventRepo;
 
     @Test
     @DisplayName("邮箱注册：发码 → 注册 → 获取 token")
@@ -115,7 +129,7 @@ class Phase1SmokeIT {
     }
 
     @Test
-    @DisplayName("Mock 支付：注册 → 新建产品 → 下单 → 支付 → 回调 → 订单已支付")
+    @DisplayName("Mock 支付：注册 → 下单 → 支付 → 回调 → 订单进入履约中")
     void mockPaymentSmoke() throws Exception {
         String adminToken = adminLogin();
         long productId = createAndShelfProduct(adminToken, "支付冒烟-" + System.currentTimeMillis());
@@ -167,8 +181,152 @@ class Phase1SmokeIT {
         mockMvc.perform(get("/api/orders/" + orderNo)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.orderStatus").value("PAID"))
+                .andExpect(jsonPath("$.data.orderStatus").value("FULFILLING"))
                 .andExpect(jsonPath("$.data.paymentStatus").value("PAID"));
+    }
+
+    @Test
+    @DisplayName("管理端登录：响应包含 SUPER_ADMIN 角色")
+    void adminLoginIncludesRolesSmoke() throws Exception {
+        mockMvc.perform(post("/admin/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"admin\",\"password\":\"changeme\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.roles").isArray())
+                .andExpect(jsonPath("$.data.roles[?(@ == 'SUPER_ADMIN')]").exists());
+    }
+
+    @Test
+    @DisplayName("支付成功：创建履约任务、写入 Outbox、订单详情可见日志")
+    void fulfillmentCreatedAfterPaymentSmoke() throws Exception {
+        PaidOrder paid = createPaidOrder();
+
+        mockMvc.perform(get("/api/orders/" + paid.orderNo())
+                        .header("Authorization", "Bearer " + paid.userToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.fulfillmentTaskNo").isNotEmpty())
+                .andExpect(jsonPath("$.data.fulfillmentTaskStatus").value("PENDING"))
+                .andExpect(jsonPath("$.data.fulfillmentStatus").value("PENDING"))
+                .andExpect(jsonPath("$.data.fulfillmentLogs").isArray())
+                .andExpect(jsonPath("$.data.fulfillmentLogs.length()").value(1))
+                .andExpect(jsonPath("$.data.fulfillmentLogs[0].content").value(org.hamcrest.Matchers.containsString("履约任务已创建")));
+
+        FulfillmentTask task = fulfillmentTaskRepo.findByOrderId(paid.orderId()).orElseThrow();
+        assertThat(task.getStatus()).isEqualTo("PENDING");
+        assertThat(outboxEventRepo.findAll().stream()
+                .anyMatch(e -> "ORDER_FULFILLMENT_STARTED".equals(e.getEventType())))
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("履约中重复下单：同产品返回 409")
+    void duplicateOrderWhileFulfillingSmoke() throws Exception {
+        PaidOrder paid = createPaidOrder();
+
+        mockMvc.perform(post("/api/orders")
+                        .header("Authorization", "Bearer " + paid.userToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"productId":%d,"fields":{"target_account":"dup@example.com"}}
+                                """.formatted(paid.productId())))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ORDER_001"));
+    }
+
+    @Test
+    @DisplayName("等待用户：补充资料后履约任务恢复处理中")
+    void fulfillmentSupplementSmoke() throws Exception {
+        PaidOrder paid = createPaidOrder();
+        FulfillmentTask task = fulfillmentTaskRepo.findByOrderId(paid.orderId()).orElseThrow();
+        task.setStatus("WAIT_USER");
+        fulfillmentTaskRepo.save(task);
+
+        SubscriptionOrder order = orderRepo.findById(paid.orderId()).orElseThrow();
+        order.setFulfillmentStatus("WAIT_USER");
+        orderRepo.save(order);
+
+        mockMvc.perform(post("/api/orders/" + paid.orderNo() + "/fulfillment/supplement")
+                        .header("Authorization", "Bearer " + paid.userToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"已在官网完成绑定\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.status").value("PROCESSING"));
+
+        mockMvc.perform(get("/api/orders/" + paid.orderNo())
+                        .header("Authorization", "Bearer " + paid.userToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.fulfillmentTaskStatus").value("PROCESSING"))
+                .andExpect(jsonPath("$.data.fulfillmentLogs.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)));
+    }
+
+    @Test
+    @DisplayName("等待用户：自主确认后履约任务恢复处理中")
+    void fulfillmentConfirmSmoke() throws Exception {
+        PaidOrder paid = createPaidOrder();
+        FulfillmentTask task = fulfillmentTaskRepo.findByOrderId(paid.orderId()).orElseThrow();
+        task.setStatus("WAIT_USER");
+        fulfillmentTaskRepo.save(task);
+
+        mockMvc.perform(post("/api/orders/" + paid.orderNo() + "/fulfillment/confirm")
+                        .header("Authorization", "Bearer " + paid.userToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PROCESSING"));
+
+        assertThat(fulfillmentTaskRepo.findByOrderId(paid.orderId()).orElseThrow().getStatus())
+                .isEqualTo("PROCESSING");
+    }
+
+    private record PaidOrder(String userToken, String orderNo, long productId, long orderId) {}
+
+    private PaidOrder createPaidOrder() throws Exception {
+        String adminToken = adminLogin();
+        long productId = createAndShelfProduct(adminToken, "履约冒烟-" + System.currentTimeMillis());
+
+        String email = "fulfill-" + System.currentTimeMillis() + "@example.com";
+        String code = sendEmailCode(email);
+
+        MvcResult register = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"type":"EMAIL","email":"%s","verifyCode":"%s"}
+                                """.formatted(email, code)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String token = objectMapper.readTree(register.getResponse().getContentAsString())
+                .get("data").get("accessToken").asText();
+
+        MvcResult createOrder = mockMvc.perform(post("/api/orders")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"productId":%d,"fields":{"target_account":"fulfill@example.com"}}
+                                """.formatted(productId)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String orderNo = objectMapper.readTree(createOrder.getResponse().getContentAsString())
+                .get("data").get("orderNo").asText();
+
+        MvcResult pay = mockMvc.perform(post("/api/orders/" + orderNo + "/pay")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channel\":\"XUNHUPAY\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode payData = objectMapper.readTree(pay.getResponse().getContentAsString()).get("data");
+        mockMvc.perform(post("/api/payments/mock/notify")
+                        .param("paymentNo", payData.get("paymentNo").asText())
+                        .param("tradeNo", payData.get("mockTradeNo").asText()))
+                .andExpect(status().isOk());
+
+        long orderId = orderRepo.findByOrderNo(orderNo).orElseThrow().getId();
+        return new PaidOrder(token, orderNo, productId, orderId);
     }
 
     private String adminLogin() throws Exception {

@@ -131,7 +131,21 @@ cd backend
 
 ---
 
-## 9. 下一步
+## 9. 后续迭代（设计文档）
 
-- `/speckit-tasks` — 生成可执行任务列表
-- 二期启用前阅读 `data-model.md` Phase 2 预留表与 `spec.md` 澄清记录
+| 阶段 | 文档 | 说明 |
+|------|------|------|
+| 二期 | [spec.md](./spec.md) US 3–4、8–10 | 履约、退款、通知、RBAC；Flyway V2 |
+| 三期 | [spec.md](./spec.md) US 11–13、[api-admin-phase3.openapi.yaml](./contracts/api-admin-phase3.openapi.yaml) | 账本、`SUCCESS` 结算、提现；Flyway V3 |
+
+关键口径（已澄清）：
+- 订单履约成功 → `order_status = SUCCESS`
+- 可提现/运营收入仅统计 `SUCCESS` 订单
+- 提现收款账户必选 `PayoutAccount` 预设
+
+---
+
+## 10. 下一步
+
+- `/speckit-tasks` — 生成可执行任务列表（一期）
+- 二期/三期实现前阅读 [plan.md](./plan.md) 分阶段 Implementation Order

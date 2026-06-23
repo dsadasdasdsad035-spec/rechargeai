@@ -17,7 +17,7 @@ public interface SubscriptionOrderRepository extends JpaRepository<SubscriptionO
 
     Optional<SubscriptionOrder> findByOrderNoAndUserId(String orderNo, Long userId);
 
-    @Query("SELECT o FROM SubscriptionOrder o WHERE o.userId = :userId AND o.productId = :productId AND o.orderStatus IN ('WAIT_PAY','PAID')")
+    @Query("SELECT o FROM SubscriptionOrder o WHERE o.userId = :userId AND o.productId = :productId AND o.orderStatus IN ('WAIT_PAY','PAID','FULFILLING')")
     List<SubscriptionOrder> findActiveByUserAndProduct(@Param("userId") Long userId, @Param("productId") Long productId);
 
     Page<SubscriptionOrder> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
