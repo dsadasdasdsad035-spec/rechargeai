@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEPLOY="$ROOT/deploy"
-DEPLOY_DOMAIN="${DEPLOY_DOMAIN:-http://rechargeai.cn}"
+DEPLOY_DOMAIN="${DEPLOY_DOMAIN:-https://rechargeai.cn}"
 SERVER="${DEPLOY_SERVER:-root@8.218.19.217}"
 REMOTE_DIR="${DEPLOY_REMOTE_DIR:-/opt/wildai}"
 
@@ -26,6 +26,15 @@ cp "$ROOT/backend/target/wildai-backend-0.1.0-SNAPSHOT.jar" "$DEPLOY/"
 cp -r "$ROOT/frontend-user/dist/." "$DEPLOY/html/user/"
 cp -r "$ROOT/frontend-admin/dist/." "$DEPLOY/html/admin/"
 
+if [[ -f "$ROOT/ssl/fullchain.pem" && -f "$ROOT/ssl/privkey.key" ]]; then
+  echo "==> 复制 SSL 证书..."
+  mkdir -p "$DEPLOY/ssl"
+  cp "$ROOT/ssl/fullchain.pem" "$ROOT/ssl/privkey.key" "$DEPLOY/ssl/"
+elif [[ ! -f "$DEPLOY/ssl/fullchain.pem" ]]; then
+  echo "错误: 未找到 SSL 证书，请将 fullchain.pem 与 privkey.key 放到项目 ssl/ 目录" >&2
+  exit 1
+fi
+
 if [[ ! -f "$DEPLOY/.env" ]]; then
   echo "==> 生成 .env（首次部署）..."
   JWT=$(openssl rand -hex 24)
@@ -40,9 +49,9 @@ WILDAI_PAYMENT_MOCK_ENABLED=false
 XUNHUPAY_APPID=请填写虎皮椒APPID
 XUNHUPAY_SECRET=请填写虎皮椒密钥
 XUNHUPAY_GATEWAY=https://api.xunhupay.com
-XUNHUPAY_NOTIFY_URL=http://rechargeai.cn/api/payments/xunhupay/notify
-XUNHUPAY_RETURN_URL=http://rechargeai.cn/transaction-record
-XUNHUPAY_CALLBACK_URL=http://rechargeai.cn/transaction-record
+XUNHUPAY_NOTIFY_URL=https://rechargeai.cn/api/payments/xunhupay/notify
+XUNHUPAY_RETURN_URL=https://rechargeai.cn/transaction-record
+XUNHUPAY_CALLBACK_URL=https://rechargeai.cn/transaction-record
 XUNHUPAY_TIMEOUT_SECONDS=10
 EOF
 fi

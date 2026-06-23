@@ -81,11 +81,15 @@ public class XunhuPayPaymentAdapter implements PaymentChannelAdapter {
         }
 
         Map<?, ?> data = responseData(response);
+        String openOrderId = stringValue(data.get("open_order_id"));
+        if (openOrderId.isBlank()) {
+            openOrderId = stringValue(data.get("openid"));
+        }
         return Map.of(
                 "paymentNo", paymentNo,
                 "paymentUrl", stringValue(data.get("url")),
                 "codeUrl", stringValue(data.get("url_qrcode")),
-                "openOrderId", stringValue(data.get("open_order_id"))
+                "openOrderId", openOrderId
         );
     }
 
@@ -108,7 +112,10 @@ public class XunhuPayPaymentAdapter implements PaymentChannelAdapter {
     @Override
     public String extractThirdTradeNo(Map<String, String> params) {
         String transactionId = params.get("transaction_id");
-        return transactionId != null ? transactionId : params.get("open_order_id");
+        if (transactionId != null && !transactionId.isBlank()) {
+            return transactionId;
+        }
+        return params.get("open_order_id");
     }
 
     @Override
@@ -126,7 +133,7 @@ public class XunhuPayPaymentAdapter implements PaymentChannelAdapter {
     private Map<String, Object> postCreatePayment(WildAiProperties.Payment.XunhuPay config, Map<String, String> params) {
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setContentType(MediaType.parseMediaType("application/json;charset=UTF-8"));
             Map<String, Object> response = restTemplate.postForObject(endpoint(config, "/payment/do.html"), new HttpEntity<>(params, headers), Map.class);
             if (response == null) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST, "虎皮椒支付网关返回为空");
@@ -143,6 +150,9 @@ public class XunhuPayPaymentAdapter implements PaymentChannelAdapter {
         Object data = response.get("data");
         if (data instanceof Map<?, ?> map) {
             return map;
+        }
+        if (response.get("url") != null || response.get("url_qrcode") != null) {
+            return response;
         }
         throw new BusinessException(ErrorCode.BAD_REQUEST, "虎皮椒支付网关返回格式异常");
     }

@@ -26,3 +26,8 @@ Thumbs.db
 
 # Local config
 backend/src/main/resources/application-local.yml
+
+# SSL 私钥与证书（通过 deploy/ssl 随部署包上传，勿提交仓库）
+ssl/
+Nginx/
+deploy/ssl/

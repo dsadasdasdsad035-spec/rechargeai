@@ -49,13 +49,13 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       WILDAI_JWT_SECRET: ${JWT_SECRET}
       WILDAI_AES_SECRET_KEY: ${AES_SECRET_KEY}
-      WILDAI_PAYMENT_MOCK_ENABLED: ${WILDAI_PAYMENT_MOCK_ENABLED:-true}
+      WILDAI_PAYMENT_MOCK_ENABLED: ${WILDAI_PAYMENT_MOCK_ENABLED:-false}
       XUNHUPAY_APPID: ${XUNHUPAY_APPID:-}
       XUNHUPAY_SECRET: ${XUNHUPAY_SECRET:-}
       XUNHUPAY_GATEWAY: ${XUNHUPAY_GATEWAY:-https://api.xunhupay.com}
-      XUNHUPAY_NOTIFY_URL: ${XUNHUPAY_NOTIFY_URL:-http://rechargeai.cn/api/payments/xunhupay/notify}
-      XUNHUPAY_RETURN_URL: ${XUNHUPAY_RETURN_URL:-http://rechargeai.cn/transaction-record}
-      XUNHUPAY_CALLBACK_URL: ${XUNHUPAY_CALLBACK_URL:-http://rechargeai.cn/transaction-record}
+      XUNHUPAY_NOTIFY_URL: ${XUNHUPAY_NOTIFY_URL:-https://rechargeai.cn/api/payments/xunhupay/notify}
+      XUNHUPAY_RETURN_URL: ${XUNHUPAY_RETURN_URL:-https://rechargeai.cn/transaction-record}
+      XUNHUPAY_CALLBACK_URL: ${XUNHUPAY_CALLBACK_URL:-https://rechargeai.cn/transaction-record}
       XUNHUPAY_TIMEOUT_SECONDS: ${XUNHUPAY_TIMEOUT_SECONDS:-10}
       MAIL_ENABLED: ${MAIL_ENABLED:-true}
       MAIL_HOST: ${MAIL_HOST:-smtp.qq.com}
@@ -74,8 +74,10 @@ services:
       - backend
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
       - ./html/user:/usr/share/nginx/html/user:ro
       - ./html/admin:/usr/share/nginx/html/admin:ro
 

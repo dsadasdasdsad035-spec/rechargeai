@@ -2,7 +2,7 @@
 # 线上冒烟测试：管理端新建产品 + 邮箱注册 + Mock 支付闭环
 set -euo pipefail
 
-BASE_URL="${SMOKE_BASE_URL:-http://rechargeai.cn}"
+BASE_URL="${SMOKE_BASE_URL:-https://rechargeai.cn}"
 API="${BASE_URL}/api"
 ADMIN_API="${BASE_URL}/admin/api"
 SSH_TARGET="${SMOKE_SSH:-root@8.218.19.217}"
@@ -85,22 +85,29 @@ ORDER_RESP=$(curl -fsS -X POST "${API}/orders" \
 ORDER_NO=$(echo "${ORDER_RESP}" | sed -n 's/.*"orderNo":"\([^"]*\)".*/\1/p')
 echo "    订单号: ${ORDER_NO}"
 
-echo "==> 7. 发起 Mock 支付"
+echo "==> 7. 发起虎皮椒支付"
 PAY_RESP=$(curl -fsS -X POST "${API}/orders/${ORDER_NO}/pay" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
-  -d '{"channel":"WECHAT"}')
+  -d '{"channel":"XUNHUPAY"}')
 
-PAYMENT_NO=$(echo "${PAY_RESP}" | sed -n 's/.*"paymentNo":"\([^"]*\)".*/\1/p')
-TRADE_NO=$(echo "${PAY_RESP}" | sed -n 's/.*"mockTradeNo":"\([^"]*\)".*/\1/p')
-echo "    支付单: ${PAYMENT_NO}"
+echo "${PAY_RESP}" | grep -q '"code":"0"' || { echo "发起支付失败: ${PAY_RESP}"; exit 1; }
 
-echo "==> 8. 模拟支付回调"
-curl -fsS -X POST "${API}/payments/mock/notify?paymentNo=${PAYMENT_NO}&tradeNo=${TRADE_NO}" >/dev/null
-
-echo "==> 9. 校验订单状态"
-DETAIL=$(curl -fsS "${API}/orders/${ORDER_NO}" -H "Authorization: Bearer ${TOKEN}")
-echo "${DETAIL}" | grep -q '"orderStatus":"PAID"' || { echo "订单未支付: ${DETAIL}"; exit 1; }
-echo "${DETAIL}" | grep -q '"paymentStatus":"PAID"' || { echo "支付状态异常: ${DETAIL}"; exit 1; }
+if echo "${PAY_RESP}" | grep -q mockTradeNo; then
+  PAYMENT_NO=$(echo "${PAY_RESP}" | sed -n 's/.*"paymentNo":"\([^"]*\)".*/\1/p')
+  TRADE_NO=$(echo "${PAY_RESP}" | sed -n 's/.*"mockTradeNo":"\([^"]*\)".*/\1/p')
+  echo "    支付单: ${PAYMENT_NO}（Mock）"
+  echo "==> 8. 模拟支付回调"
+  curl -fsS -X POST "${API}/payments/mock/notify?paymentNo=${PAYMENT_NO}&tradeNo=${TRADE_NO}" >/dev/null
+  echo "==> 9. 校验订单状态"
+  DETAIL=$(curl -fsS "${API}/orders/${ORDER_NO}" -H "Authorization: Bearer ${TOKEN}")
+  echo "${DETAIL}" | grep -q '"orderStatus":"PAID"' || { echo "订单未支付: ${DETAIL}"; exit 1; }
+  echo "${DETAIL}" | grep -q '"paymentStatus":"PAID"' || { echo "支付状态异常: ${DETAIL}"; exit 1; }
+else
+  PAYMENT_URL=$(echo "${PAY_RESP}" | sed -n 's/.*"paymentUrl":"\([^"]*\)".*/\1/p')
+  echo "    真实支付已创建"
+  [ -n "${PAYMENT_URL}" ] && echo "    支付链接: ${PAYMENT_URL}"
+  echo "==> 8-9. 跳过自动支付（真实支付需扫码完成）"
+fi
 
 echo "==> 冒烟测试通过"

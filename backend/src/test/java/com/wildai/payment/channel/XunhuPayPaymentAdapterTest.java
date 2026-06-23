@@ -51,7 +51,7 @@ class XunhuPayPaymentAdapterTest {
 
         server.expect(once(), requestTo("https://api.xunhupay.com/payment/do.html"))
                 .andExpect(method(HttpMethod.POST))
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/json;charset=UTF-8"))
                 .andExpect(content().json(objectMapper.writeValueAsString(expectedBody), true))
                 .andRespond(withSuccess("""
                         {
@@ -71,6 +71,36 @@ class XunhuPayPaymentAdapterTest {
                 .containsEntry("paymentUrl", "https://pay.example/open")
                 .containsEntry("codeUrl", "https://pay.example/qr.png")
                 .containsEntry("openOrderId", "HPJ1001");
+        server.verify();
+    }
+
+    @Test
+    void createPaymentSupportsFlatGatewayResponse() throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+        XunhuPayPaymentAdapter adapter = new XunhuPayPaymentAdapter(
+                properties(),
+                restTemplate,
+                Clock.fixed(Instant.ofEpochSecond(1_700_000_000L), ZoneOffset.UTC),
+                () -> "abc123abc123abc123abc123abc123ab"
+        );
+
+        server.expect(once(), requestTo("https://api.xunhupay.com/payment/do.html"))
+                .andRespond(withSuccess("""
+                        {
+                          "openid": 20300739494,
+                          "url_qrcode": "https://api.xunhupay.com/payments/wechat/qrcode",
+                          "url": "https://api.xunhupay.com/payments/wechat/index",
+                          "errcode": 0,
+                          "errmsg": "success!"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        Map<String, String> result = adapter.createPayment("P1002", new BigDecimal("1.00"), "O1002");
+
+        assertThat(result).containsEntry("paymentUrl", "https://api.xunhupay.com/payments/wechat/index")
+                .containsEntry("codeUrl", "https://api.xunhupay.com/payments/wechat/qrcode")
+                .containsEntry("openOrderId", "20300739494");
         server.verify();
     }
 

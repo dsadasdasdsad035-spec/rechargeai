@@ -78,7 +78,31 @@ class Phase1SmokeIT {
     }
 
     @Test
-    @DisplayName("管理端：登录 → 新建产品 → 上架")
+    @DisplayName("邮箱登录：注册 → 发码 → 登录")
+    void emailLoginSmoke() throws Exception {
+        String email = "login-" + System.currentTimeMillis() + "@example.com";
+        String registerCode = sendEmailCode(email);
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"type":"EMAIL","email":"%s","verifyCode":"%s"}
+                                """.formatted(email, registerCode)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"));
+
+        String loginCode = sendEmailCode(email);
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"%s","verifyCode":"%s"}
+                                """.formatted(email, loginCode)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
+    }
+
+    @Test
     void adminCreateProductSmoke() throws Exception {
         String adminToken = adminLogin();
         long productId = createAndShelfProduct(adminToken, "冒烟产品-" + System.currentTimeMillis());
@@ -126,7 +150,7 @@ class Phase1SmokeIT {
         MvcResult pay = mockMvc.perform(post("/api/orders/" + orderNo + "/pay")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"channel\":\"WECHAT\"}"))
+                        .content("{\"channel\":\"XUNHUPAY\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.paymentNo").isNotEmpty())
                 .andReturn();

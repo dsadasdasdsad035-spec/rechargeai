@@ -6,7 +6,7 @@ import BaseButton from '../components/ui/BaseButton.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
 import BaseCard from '../components/ui/BaseCard.vue'
 
-const phone = ref('')
+const email = ref('')
 const code = ref('')
 const auth = useAuthStore()
 const router = useRouter()
@@ -16,9 +16,10 @@ const submitting = ref(false)
 
 async function sendCode() {
   sending.value = true
+  devCode.value = ''
   try {
-    const res = await auth.sendCode(phone.value)
-    devCode.value = res.data.data.devCode
+    const res = await auth.sendCodeEmail(email.value)
+    devCode.value = res.data.data.devCode ?? ''
   } finally {
     sending.value = false
   }
@@ -27,7 +28,7 @@ async function sendCode() {
 async function submit() {
   submitting.value = true
   try {
-    await auth.loginPhone(phone.value, code.value)
+    await auth.loginEmail(email.value, code.value)
     router.push('/products')
   } finally {
     submitting.value = false
@@ -40,11 +41,11 @@ async function submit() {
     <BaseCard class="auth-card">
       <header class="auth-header">
         <h2>登录</h2>
-        <p>使用手机号验证码登录您的账户</p>
+        <p>使用邮箱验证码登录您的账户</p>
       </header>
 
       <form class="auth-form" @submit.prevent="submit">
-        <BaseInput v-model="phone" label="手机号" type="tel" placeholder="请输入手机号" />
+        <BaseInput v-model="email" label="邮箱" type="email" placeholder="your@email.com" />
         <div class="code-row">
           <BaseInput v-model="code" label="验证码" placeholder="请输入验证码" />
           <BaseButton type="button" variant="secondary" :disabled="sending" @click="sendCode">

@@ -43,21 +43,16 @@ public class AuthController {
 
     @PostMapping("/send-code")
     public ApiResponse<Map<String, String>> sendCode(@RequestBody Map<String, String> body) {
-        String phone = body.get("phone");
         String email = body.get("email");
-        String target;
-        if (email != null && !email.isBlank()) {
-            verifyCodeService.requireEmail(email);
-            target = email.trim();
-        } else if (phone != null && !phone.isBlank()) {
-            target = phone.trim();
-        } else {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "请提供手机号或邮箱");
+        if (email == null || email.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "请提供邮箱");
         }
+        verifyCodeService.requireEmail(email);
+        String target = email.trim();
 
         String code = verifyCodeService.sendCode(target);
         Map<String, String> result = new HashMap<>();
-        result.put("message", verifyCodeService.isEmail(target) ? "验证码已发送至邮箱" : "验证码已发送");
+        result.put("message", "验证码已发送至邮箱");
         if (verifyCodeService.exposeDevCode()) {
             result.put("devCode", code);
         }
