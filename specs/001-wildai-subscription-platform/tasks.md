@@ -1,4 +1,4 @@
-# Tasks: WildAI 订阅助手平台
+# Tasks: RechargeAi 订阅助手平台
 
 **Input**: Design documents from `/specs/001-wildai-subscription-platform/`  
 **Prerequisites**: plan.md ✅ | spec.md ✅ | research.md ✅ | data-model.md ✅ | contracts/ ✅  

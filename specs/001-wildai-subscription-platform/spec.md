@@ -1,4 +1,4 @@
-# Feature Specification: WildAI 订阅助手平台
+# Feature Specification: RechargeAi 订阅助手平台
 
 **Feature Branch**: `001-wildai-subscription-platform`
 
@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "WildAI_订阅助手平台_详细设计文档.docx — AI 服务订阅助手平台，支持用户下单支付、履约任务流、交易记录、退款及后台运营管理"
+**Input**: User description: "RechargeAi_订阅助手平台_详细设计文档.docx — AI 服务订阅助手平台，支持用户下单支付、履约任务流、交易记录、退款及后台运营管理"
 
 ## Clarifications
 

@@ -5,7 +5,7 @@ alwaysApply: true
 <!-- SPECKIT START -->
 ## 当前实现计划
 
-**Feature**: WildAI 订阅助手平台 (`001-wildai-subscription-platform`)  
+**Feature**: RechargeAi 订阅助手平台 (`001-wildai-subscription-platform`)  
 **Plan**: [specs/001-wildai-subscription-platform/plan.md](../../specs/001-wildai-subscription-platform/plan.md)  
 **Spec**: [specs/001-wildai-subscription-platform/spec.md](../../specs/001-wildai-subscription-platform/spec.md)
 

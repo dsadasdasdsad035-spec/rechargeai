@@ -1,4 +1,4 @@
--- WildAI MVP 一期 schema
+-- RechargeAi MVP 一期 schema
 
 CREATE TABLE user_account (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,

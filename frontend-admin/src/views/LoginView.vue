@@ -35,9 +35,9 @@ async function login() {
   <div class="login-page">
     <el-card class="login-card" shadow="never">
       <div class="login-brand">
-        <span class="login-brand__mark">W</span>
+        <span class="login-brand__mark">R</span>
         <div>
-          <div class="login-brand__title">WildAI 管理端</div>
+          <div class="login-brand__title">RechargeAi 管理端</div>
           <div class="login-brand__sub">订阅助手运营后台</div>
         </div>
       </div>

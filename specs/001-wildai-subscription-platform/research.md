@@ -1,4 +1,4 @@
-# Research: WildAI 订阅助手平台
+# Research: RechargeAi 订阅助手平台
 
 **Date**: 2026-06-17  
 **Feature**: `001-wildai-subscription-platform`  

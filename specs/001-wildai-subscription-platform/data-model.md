@@ -1,4 +1,4 @@
-# Data Model: WildAI 订阅助手平台
+# Data Model: RechargeAi 订阅助手平台
 
 **Date**: 2026-06-17  
 **Phase 1 Tables**: `user_account`, `ai_service_product`, `subscription_order`, `payment_transaction`, `admin_user`（一期简化后台账号）

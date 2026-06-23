@@ -62,7 +62,7 @@ services:
       MAIL_PORT: ${MAIL_PORT:-465}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      MAIL_FROM: ${MAIL_FROM:-WildAI <noreply@rechargeai.cn>}
+      MAIL_FROM: ${MAIL_FROM:-RechargeAi <noreply@rechargeai.cn>}
     expose:
       - "8080"
 

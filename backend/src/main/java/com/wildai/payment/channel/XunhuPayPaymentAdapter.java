@@ -66,7 +66,7 @@ public class XunhuPayPaymentAdapter implements PaymentChannelAdapter {
         params.put("appid", config.getAppid());
         params.put("trade_order_id", paymentNo);
         params.put("total_fee", amount.setScale(2, RoundingMode.HALF_UP).toPlainString());
-        params.put("title", "WildAI 订单 " + orderNo);
+        params.put("title", "RechargeAi 订单 " + orderNo);
         params.put("notify_url", config.getNotifyUrl());
         params.put("return_url", config.getReturnUrl());
         params.put("callback_url", config.getCallbackUrl());

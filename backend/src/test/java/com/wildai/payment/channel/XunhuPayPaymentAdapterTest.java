@@ -41,7 +41,7 @@ class XunhuPayPaymentAdapterTest {
         expectedBody.put("appid", "app-001");
         expectedBody.put("trade_order_id", "P1001");
         expectedBody.put("total_fee", "12.30");
-        expectedBody.put("title", "WildAI 订单 O1001");
+        expectedBody.put("title", "RechargeAi 订单 O1001");
         expectedBody.put("notify_url", "https://wildai.example/api/payments/xunhupay/notify");
         expectedBody.put("return_url", "https://wildai.example/pay/return");
         expectedBody.put("callback_url", "https://wildai.example/pay/cancel");

@@ -52,7 +52,7 @@ public class WildAiProperties {
 
     public static class Mail {
         private boolean enabled = false;
-        private String from = "WildAI <noreply@wildai.local>";
+        private String from = "RechargeAi <noreply@rechargeai.local>";
 
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean enabled) { this.enabled = enabled; }

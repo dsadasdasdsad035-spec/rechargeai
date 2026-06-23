@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: WildAI 订阅助手 - 用户端 API（一期）
+  title: RechargeAi 订阅助手 - 用户端 API（一期）
   version: 1.0.0
   description: MVP 一期订单闭环。不含履约、退款、通知接口。
 

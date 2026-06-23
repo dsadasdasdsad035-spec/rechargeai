@@ -1,4 +1,4 @@
-# Specification Quality Checklist: WildAI 订阅助手平台
+# Specification Quality Checklist: RechargeAi 订阅助手平台
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-06-17

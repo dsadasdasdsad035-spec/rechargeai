@@ -56,7 +56,7 @@ wildai:
     expire-minutes: 15
   mail:
     enabled: ${MAIL_ENABLED:false}
-    from: ${MAIL_FROM:WildAI <noreply@wildai.local>}
+    from: ${MAIL_FROM:RechargeAi <noreply@rechargeai.local>}
   payment:
     mock-enabled: ${WILDAI_PAYMENT_MOCK_ENABLED:true}
     xunhupay:

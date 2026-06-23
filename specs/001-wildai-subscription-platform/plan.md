@@ -1,4 +1,4 @@
-# Implementation Plan: WildAI 订阅助手平台
+# Implementation Plan: RechargeAi 订阅助手平台
 
 **Branch**: `001-wildai-subscription-platform` | **Date**: 2026-06-17 | **Spec**: [spec.md](./spec.md)
 

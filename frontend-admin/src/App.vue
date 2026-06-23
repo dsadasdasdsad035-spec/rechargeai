@@ -23,9 +23,9 @@ function logout() {
     <el-container v-if="route.path !== '/login'" class="layout">
       <el-aside width="220px" class="aside">
         <div class="brand">
-          <span class="brand__mark">W</span>
+          <span class="brand__mark">R</span>
           <div>
-            <div class="brand__name">WildAI</div>
+            <div class="brand__name">RechargeAi</div>
             <div class="brand__sub">管理后台</div>
           </div>
         </div>

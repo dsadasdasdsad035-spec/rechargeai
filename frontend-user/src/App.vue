@@ -21,8 +21,8 @@ function logout() {
   <header class="header">
     <div class="header__inner">
       <RouterLink to="/products" class="logo" @click="closeMenu">
-        <span class="logo__mark">W</span>
-        <span class="logo__text">WildAI</span>
+        <span class="logo__mark">R</span>
+        <span class="logo__text">RechargeAi</span>
       </RouterLink>
 
       <button

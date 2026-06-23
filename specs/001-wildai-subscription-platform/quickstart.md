@@ -1,4 +1,4 @@
-# Quickstart: WildAI 订阅助手平台（MVP 一期）
+# Quickstart: RechargeAi 订阅助手平台（MVP 一期）
 
 **Feature**: `001-wildai-subscription-platform`  
 **Goal**: 本地运行订单闭环（注册 → 浏览 → 下单 → 支付 → 交易记录 → 后台只读订单）

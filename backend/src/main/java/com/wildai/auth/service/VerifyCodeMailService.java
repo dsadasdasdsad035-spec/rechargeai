@@ -30,15 +30,15 @@ public class VerifyCodeMailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(properties.getMail().getFrom());
             message.setTo(email);
-            message.setSubject("WildAI 注册验证码");
+            message.setSubject("RechargeAi 注册验证码");
             message.setText("""
                     您好，
 
-                    您正在注册 WildAI 订阅助手，验证码为：%s
+                    您正在注册 RechargeAi 订阅助手，验证码为：%s
 
                     验证码 5 分钟内有效，请勿泄露给他人。如非本人操作，请忽略此邮件。
 
-                    — WildAI 订阅助手
+                    — RechargeAi 订阅助手
                     """.formatted(code));
             mailSender.send(message);
         } catch (Exception e) {
