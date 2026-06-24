@@ -94,7 +94,11 @@ onMounted(load)
         </div>
         <div class="detail-list__row">
           <span class="detail-list__label">AI 账号</span>
-          <span class="detail-list__value">{{ detail.targetAccountMasked }}</span>
+          <span class="detail-list__value">{{ detail.targetAccountPlain || detail.targetAccountMasked }}</span>
+        </div>
+        <div v-if="detail.accountTokenPlain || detail.accountTokenMasked" class="detail-list__row">
+          <span class="detail-list__label">Session Token</span>
+          <span class="detail-list__value detail-list__value--mono">{{ detail.accountTokenPlain || detail.accountTokenMasked }}</span>
         </div>
         <div class="detail-list__row">
           <span class="detail-list__label">订单状态</span>

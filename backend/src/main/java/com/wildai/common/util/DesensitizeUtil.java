@@ -29,6 +29,16 @@ public final class DesensitizeUtil {
         return account.substring(0, 2) + "****" + account.substring(account.length() - 2);
     }
 
+    public static String token(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+        if (token.length() <= 8) {
+            return "****";
+        }
+        return token.substring(0, 4) + "****" + token.substring(token.length() - 4);
+    }
+
     public static String tradeNo(String tradeNo) {
         if (tradeNo == null || tradeNo.length() <= 6) {
             return tradeNo;

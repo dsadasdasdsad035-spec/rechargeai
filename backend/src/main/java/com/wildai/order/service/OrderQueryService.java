@@ -10,6 +10,7 @@ import com.wildai.fulfillment.repository.FulfillmentLogRepository;
 import com.wildai.fulfillment.repository.FulfillmentTaskRepository;
 import com.wildai.refund.repository.RefundRequestRepository;
 import com.wildai.order.domain.SubscriptionOrder;
+import com.wildai.order.dto.AdminOrderDetailDto;
 import com.wildai.order.dto.OrderDetailDto;
 import com.wildai.order.dto.OrderSummaryDto;
 import com.wildai.order.repository.SubscriptionOrderRepository;
@@ -76,10 +77,10 @@ public class OrderQueryService {
         return new PageResult<>(pageNo, pageSize, page.getTotalElements(), items);
     }
 
-    public OrderDetailDto getAdminOrderDetail(String orderNo) {
+    public AdminOrderDetailDto getAdminOrderDetail(String orderNo) {
         SubscriptionOrder order = orderRepo.findByOrderNo(orderNo)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        return toDetail(order);
+        return toAdminDetail(order);
     }
 
     private OrderSummaryDto toSummary(SubscriptionOrder o, String productName) {
@@ -89,8 +90,33 @@ public class OrderQueryService {
     }
 
     private OrderDetailDto toDetail(SubscriptionOrder order) {
+        var ctx = buildDetailContext(order);
+        return new OrderDetailDto(order.getOrderNo(), order.getProductId(), ctx.productName(),
+                order.getAmount(), order.getCurrency(), ctx.accountMasked(), ctx.tokenMasked(),
+                order.getOrderStatus(), order.getPaymentStatus(), order.getFulfillmentStatus(),
+                ctx.tradeMasked(), order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt(),
+                ctx.taskNo(), ctx.taskStatus(), ctx.subStart(), ctx.subEnd(), ctx.logs(),
+                ctx.refundNo(), ctx.refundStatus());
+    }
+
+    private AdminOrderDetailDto toAdminDetail(SubscriptionOrder order) {
+        var ctx = buildDetailContext(order);
+        return new AdminOrderDetailDto(order.getOrderNo(), order.getProductId(), ctx.productName(),
+                order.getAmount(), order.getCurrency(), ctx.accountMasked(), ctx.tokenMasked(),
+                ctx.accountPlain(), ctx.tokenPlain(),
+                order.getOrderStatus(), order.getPaymentStatus(), order.getFulfillmentStatus(),
+                ctx.tradeMasked(), order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt(),
+                ctx.taskNo(), ctx.taskStatus(), ctx.subStart(), ctx.subEnd(), ctx.logs(),
+                ctx.refundNo(), ctx.refundStatus());
+    }
+
+    private DetailContext buildDetailContext(SubscriptionOrder order) {
         String productName = productRepo.findById(order.getProductId()).map(p -> p.getName()).orElse("-");
-        String account = DesensitizeUtil.account(aesEncryptUtil.decrypt(order.getTargetAccountEnc()));
+        String accountPlain = aesEncryptUtil.decrypt(order.getTargetAccountEnc());
+        String accountMasked = DesensitizeUtil.account(accountPlain);
+        String tokenPlain = order.getAccountTokenEnc() != null
+                ? aesEncryptUtil.decrypt(order.getAccountTokenEnc()) : null;
+        String tokenMasked = DesensitizeUtil.token(tokenPlain);
         String tradeMasked = paymentRepo.findByOrderId(order.getId())
                 .map(PaymentTransaction::getThirdTradeNo)
                 .map(DesensitizeUtil::tradeNo)
@@ -122,10 +148,23 @@ public class OrderQueryService {
             refundStatus = refund.getStatus();
         }
 
-        return new OrderDetailDto(order.getOrderNo(), order.getProductId(), productName,
-                order.getAmount(), order.getCurrency(), account,
-                order.getOrderStatus(), order.getPaymentStatus(), order.getFulfillmentStatus(),
-                tradeMasked, order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt(),
-                taskNo, taskStatus, subStart, subEnd, logs, refundNo, refundStatus);
+        return new DetailContext(productName, accountPlain, accountMasked, tokenPlain, tokenMasked,
+                tradeMasked, taskNo, taskStatus, subStart, subEnd, logs, refundNo, refundStatus);
     }
+
+    private record DetailContext(
+            String productName,
+            String accountPlain,
+            String accountMasked,
+            String tokenPlain,
+            String tokenMasked,
+            String tradeMasked,
+            String taskNo,
+            String taskStatus,
+            Instant subStart,
+            Instant subEnd,
+            List<FulfillmentLogDto> logs,
+            String refundNo,
+            String refundStatus
+    ) {}
 }

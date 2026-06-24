@@ -9,6 +9,7 @@ const router = useRouter()
 
 const activeMenu = computed(() => {
   if (route.path.startsWith('/products')) return '/products'
+  if (route.path.startsWith('/service-types')) return '/service-types'
   if (route.path.startsWith('/fulfillment')) return '/fulfillment'
   if (route.path.startsWith('/refunds')) return '/refunds'
   if (route.path.startsWith('/roles')) return '/roles'
@@ -61,6 +62,10 @@ function logout() {
           <el-menu-item index="/products">
             <el-icon><Goods /></el-icon>
             <span>产品管理</span>
+          </el-menu-item>
+          <el-menu-item index="/service-types">
+            <el-icon><Notebook /></el-icon>
+            <span>服务类型教程</span>
           </el-menu-item>
           <el-menu-item index="/users">
             <el-icon><User /></el-icon>

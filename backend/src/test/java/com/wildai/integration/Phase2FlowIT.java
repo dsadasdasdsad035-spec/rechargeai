@@ -133,7 +133,7 @@ class Phase2FlowIT {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"productId":%d,"fields":{"target_account":"refund-flow@example.com"}}
+                                {"productId":%d,"fields":{"target_account":"refund-flow@example.com","account_token":"test-token-refund-12345678"}}
                                 """.formatted(productId)))
                 .andExpect(status().isOk())
                 .andReturn();

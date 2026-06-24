@@ -19,24 +19,29 @@ import java.util.UUID;
 public class ProductService {
 
     private static final String DEFAULT_REQUIRED_FIELDS_JSON =
-            "[{\"key\":\"target_account\",\"label\":\"AI 账号邮箱\",\"type\":\"email\",\"required\":true}]";
+            "[{\"key\":\"target_account\",\"label\":\"AI 账号\",\"type\":\"text\",\"required\":true},"
+                    + "{\"key\":\"account_token\",\"label\":\"Session Token\",\"type\":\"password\",\"required\":true}]";
 
     private final AiServiceProductRepository productRepo;
     private final ObjectMapper objectMapper;
+    private final ServiceTypeConfigService serviceTypeConfigService;
 
-    public ProductService(AiServiceProductRepository productRepo, ObjectMapper objectMapper) {
+    public ProductService(AiServiceProductRepository productRepo, ObjectMapper objectMapper,
+                          ServiceTypeConfigService serviceTypeConfigService) {
         this.productRepo = productRepo;
         this.objectMapper = objectMapper;
+        this.serviceTypeConfigService = serviceTypeConfigService;
     }
 
     public List<ProductDetailDto> listOnShelf() {
-        return productRepo.findByStatusOrderBySortOrderAsc("ON_SHELF").stream().map(this::toDto).toList();
+        return productRepo.findByStatusOrderBySortOrderAsc("ON_SHELF").stream()
+                .map(p -> toDto(p, false)).toList();
     }
 
     public ProductDetailDto getById(Long id) {
         AiServiceProduct p = productRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "产品不存在"));
-        return toDto(p);
+        return toDto(p, true);
     }
 
     public AiServiceProduct requireOnShelf(Long id) {
@@ -59,7 +64,7 @@ public class ProductService {
                     throw new BusinessException(ErrorCode.BAD_REQUEST, "请填写" + node.path("label").asText());
                 }
                 if ("password".equalsIgnoreCase(key)) {
-                    throw new BusinessException(ErrorCode.BAD_REQUEST, "不允许提交第三方密码");
+                    throw new BusinessException(ErrorCode.BAD_REQUEST, "不允许提交第三方登录密码");
                 }
             }
         } catch (BusinessException e) {
@@ -139,9 +144,11 @@ public class ProductService {
         return productRepo.findAllByOrderBySortOrderAsc();
     }
 
-    private ProductDetailDto toDto(AiServiceProduct p) {
+    private ProductDetailDto toDto(AiServiceProduct p, boolean includeGuide) {
+        var guide = includeGuide ? serviceTypeConfigService.getGuide(p.getServiceType()) : null;
         return new ProductDetailDto(p.getId(), p.getProductCode(), p.getName(), p.getServiceType(),
                 p.getOfficialPrice(), p.getSalePrice(), p.getCurrency(), p.getPeriodDays(), p.getStatus(),
-                p.getRequiredFieldsJson(), p.getEstimatedHours(), p.getRefundPolicyText(), p.getComplianceNotice());
+                p.getRequiredFieldsJson(), p.getEstimatedHours(), p.getRefundPolicyText(), p.getComplianceNotice(),
+                guide);
     }
 }

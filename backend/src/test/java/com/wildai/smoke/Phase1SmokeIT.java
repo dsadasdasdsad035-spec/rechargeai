@@ -152,7 +152,7 @@ class Phase1SmokeIT {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"productId":%d,"fields":{"target_account":"ai-user@example.com"}}
+                                {"productId":%d,"fields":{"target_account":"ai-user@example.com","account_token":"test-token-phase1-12345678"}}
                                 """.formatted(productId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderNo").isNotEmpty())
@@ -230,7 +230,7 @@ class Phase1SmokeIT {
                         .header("Authorization", "Bearer " + paid.userToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"productId":%d,"fields":{"target_account":"dup@example.com"}}
+                                {"productId":%d,"fields":{"target_account":"dup@example.com","account_token":"test-token-dup-12345678"}}
                                 """.formatted(paid.productId())))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("ORDER_001"));
@@ -304,7 +304,7 @@ class Phase1SmokeIT {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"productId":%d,"fields":{"target_account":"fulfill@example.com"}}
+                                {"productId":%d,"fields":{"target_account":"fulfill@example.com","account_token":"test-token-fulfill-12345678"}}
                                 """.formatted(productId)))
                 .andExpect(status().isOk())
                 .andReturn();

@@ -1,20 +1,57 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
 import BaseCard from '../components/ui/BaseCard.vue'
 import http from '../services/http'
 
+interface OrderField {
+  key: string
+  label: string
+  type?: string
+  required?: boolean
+  placeholder?: string
+}
+
+interface ServiceTypeGuide {
+  serviceType: string
+  displayName: string
+  accountTutorial?: string | null
+  tokenTutorial?: string | null
+}
+
 const route = useRoute()
 const router = useRouter()
 const product = ref<any>(null)
-const targetAccount = ref('')
+const fieldValues = ref<Record<string, string>>({})
 const submitting = ref(false)
+
+const orderFields = computed<OrderField[]>(() => {
+  if (!product.value?.requiredFieldsJson) return []
+  try {
+    return JSON.parse(product.value.requiredFieldsJson)
+  } catch {
+    return []
+  }
+})
+
+const guide = computed<ServiceTypeGuide | null>(() => product.value?.serviceTypeGuide ?? null)
 
 onMounted(async () => {
   const { data } = await http.get(`/products/${route.params.id}`)
   product.value = data.data
+  const initial: Record<string, string> = {}
+  try {
+    const fields = JSON.parse(data.data.requiredFieldsJson) as OrderField[]
+    for (const field of fields) {
+      initial[field.key] = ''
+    }
+  } catch {
+    initial.target_account = ''
+    initial.account_token = ''
+  }
+  fieldValues.value = initial
 })
 
 async function submit() {
@@ -22,7 +59,7 @@ async function submit() {
   try {
     const { data } = await http.post('/orders', {
       productId: Number(route.params.id),
-      fields: { target_account: targetAccount.value },
+      fields: fieldValues.value,
     })
     router.push(`/payment/${data.data.orderNo}`)
   } finally {
@@ -39,15 +76,29 @@ async function submit() {
         <p>{{ product.name }} · ¥{{ product.salePrice }}</p>
       </header>
 
+      <BaseCard v-if="guide && (guide.accountTutorial || guide.tokenTutorial)" class="guide-card">
+        <h3 class="guide-title">{{ guide.displayName }} · 获取凭证教程</h3>
+        <section v-if="guide.accountTutorial" class="guide-section">
+          <h4>如何获取 AI 账号</h4>
+          <pre class="guide-text">{{ guide.accountTutorial }}</pre>
+        </section>
+        <section v-if="guide.tokenTutorial" class="guide-section">
+          <h4>如何获取 Session Token</h4>
+          <pre class="guide-text">{{ guide.tokenTutorial }}</pre>
+        </section>
+      </BaseCard>
+
       <BaseCard class="checkout-card">
         <form class="checkout-form" @submit.prevent="submit">
           <BaseInput
-            v-model="targetAccount"
-            label="AI 账号邮箱"
-            type="email"
-            placeholder="your@email.com"
+            v-for="field in orderFields"
+            :key="field.key"
+            v-model="fieldValues[field.key]"
+            :label="field.label"
+            :type="field.type === 'password' ? 'password' : field.type === 'email' ? 'email' : 'text'"
+            :placeholder="field.placeholder ?? `请填写${field.label}`"
           />
-          <p class="hint" role="note">请勿填写第三方服务密码</p>
+          <p class="hint" role="note">请勿填写第三方服务登录密码；Session Token 将加密保存</p>
           <BaseButton type="submit" block :disabled="submitting">
             {{ submitting ? '提交中…' : '提交订单' }}
           </BaseButton>
@@ -58,6 +109,41 @@ async function submit() {
 </template>
 
 <style scoped>
+.guide-card {
+  max-width: 480px;
+  margin-bottom: var(--space-md);
+}
+
+.guide-title {
+  margin: 0 0 var(--space-md);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.guide-section + .guide-section {
+  margin-top: var(--space-md);
+}
+
+.guide-section h4 {
+  margin: 0 0 var(--space-xs);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.guide-text {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted, #f5f5f5);
+  border-radius: var(--radius-sm);
+}
+
 .checkout-card {
   max-width: 480px;
 }

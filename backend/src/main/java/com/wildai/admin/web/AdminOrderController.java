@@ -2,6 +2,7 @@ package com.wildai.admin.web;
 
 import com.wildai.common.dto.ApiResponse;
 import com.wildai.common.dto.PageResult;
+import com.wildai.order.dto.AdminOrderDetailDto;
 import com.wildai.order.dto.OrderDetailDto;
 import com.wildai.order.dto.OrderSummaryDto;
 import com.wildai.order.repository.SubscriptionOrderRepository;
@@ -45,7 +46,7 @@ public class AdminOrderController {
     }
 
     @GetMapping("/{orderNo}")
-    public ApiResponse<OrderDetailDto> detail(@PathVariable String orderNo) {
+    public ApiResponse<AdminOrderDetailDto> detail(@PathVariable String orderNo) {
         return ApiResponse.ok(orderQueryService.getAdminOrderDetail(orderNo));
     }
 

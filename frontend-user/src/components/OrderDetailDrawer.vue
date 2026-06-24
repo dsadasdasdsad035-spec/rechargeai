@@ -26,6 +26,7 @@ interface OrderDetail {
   productName: string
   amount: number
   targetAccountMasked: string
+  accountTokenMasked?: string | null
   orderStatus: string
   paymentStatus: string
   fulfillmentStatus?: string
@@ -146,6 +147,10 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
             <div class="detail-row">
               <span class="detail-label">AI 账号</span>
               <span class="detail-value">{{ detail.targetAccountMasked }}</span>
+            </div>
+            <div v-if="detail.accountTokenMasked" class="detail-row">
+              <span class="detail-label">Session Token</span>
+              <span class="detail-value detail-value--mono">{{ detail.accountTokenMasked }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">订单号</span>

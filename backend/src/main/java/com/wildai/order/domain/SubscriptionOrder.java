@@ -30,6 +30,9 @@ public class SubscriptionOrder {
     @Column(name = "target_account_enc", nullable = false, length = 512)
     private String targetAccountEnc;
 
+    @Column(name = "account_token_enc", length = 512)
+    private String accountTokenEnc;
+
     @Column(name = "order_status", nullable = false, length = 32)
     private String orderStatus;
 
@@ -68,6 +71,8 @@ public class SubscriptionOrder {
     public void setCurrency(String currency) { this.currency = currency; }
     public String getTargetAccountEnc() { return targetAccountEnc; }
     public void setTargetAccountEnc(String targetAccountEnc) { this.targetAccountEnc = targetAccountEnc; }
+    public String getAccountTokenEnc() { return accountTokenEnc; }
+    public void setAccountTokenEnc(String accountTokenEnc) { this.accountTokenEnc = accountTokenEnc; }
     public String getOrderStatus() { return orderStatus; }
     public void setOrderStatus(String orderStatus) { this.orderStatus = orderStatus; }
     public String getPaymentStatus() { return paymentStatus; }

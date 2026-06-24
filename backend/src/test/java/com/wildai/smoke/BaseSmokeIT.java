@@ -148,7 +148,7 @@ abstract class BaseSmokeIT {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"productId":%d,"fields":{"target_account":"smoke@example.com"}}
+                                {"productId":%d,"fields":{"target_account":"smoke@example.com","account_token":"test-token-smoke-12345678"}}
                                 """.formatted(productId)))
                 .andExpect(status().isOk())
                 .andReturn();

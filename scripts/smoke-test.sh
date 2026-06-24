@@ -80,7 +80,7 @@ echo "==> 6. 创建订单（产品 ${PRODUCT_ID}）"
 ORDER_RESP=$(curl -fsS -X POST "${API}/orders" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
-  -d "{\"productId\":${PRODUCT_ID},\"fields\":{\"target_account\":\"smoke@example.com\"}}")
+  -d "{\"productId\":${PRODUCT_ID},\"fields\":{\"target_account\":\"smoke@example.com\",\"account_token\":\"test-token-smoke-12345678\"}}")
 
 ORDER_NO=$(echo "${ORDER_RESP}" | sed -n 's/.*"orderNo":"\([^"]*\)".*/\1/p')
 echo "    订单号: ${ORDER_NO}"

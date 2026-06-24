@@ -62,6 +62,10 @@ public class OrderService {
         order.setAmount(product.getSalePrice());
         order.setCurrency(product.getCurrency());
         order.setTargetAccountEnc(aesEncryptUtil.encrypt(targetAccount));
+        String accountToken = req.fields().get("account_token");
+        if (accountToken != null && !accountToken.isBlank()) {
+            order.setAccountTokenEnc(aesEncryptUtil.encrypt(accountToken.trim()));
+        }
         order.setOrderStatus("WAIT_PAY");
         order.setPaymentStatus("UNPAID");
         order.setFulfillmentStatus("NOT_STARTED");

@@ -6,9 +6,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-public record OrderDetailDto(
+public record AdminOrderDetailDto(
         String orderNo, Long productId, String productName, BigDecimal amount, String currency,
         String targetAccountMasked, String accountTokenMasked,
+        String targetAccountPlain, String accountTokenPlain,
         String orderStatus, String paymentStatus, String fulfillmentStatus,
         String thirdTradeNoMasked, Instant createdAt, Instant paidAt, Instant expiredAt,
         String fulfillmentTaskNo, String fulfillmentTaskStatus,
