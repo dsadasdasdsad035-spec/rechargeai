@@ -26,6 +26,15 @@ export const FULFILLMENT_STATUS_LABEL: Record<string, string> = {
   FAILED: '履约失败',
 }
 
+export const REFUND_STATUS_LABEL: Record<string, string> = {
+  PENDING: '待审核',
+  APPROVED: '审核通过',
+  REJECTED: '已驳回',
+  REFUNDING: '退款中',
+  COMPLETED: '已退款',
+  CHANNEL_REFUND_FAILED: '渠道退款失败',
+}
+
 export type StatusTone = 'primary' | 'success' | 'warning' | 'neutral' | 'danger'
 
 export function orderStatusTone(status: string): StatusTone {

@@ -55,6 +55,67 @@ public class RbacService {
         return !roles.isEmpty() && roles.stream().allMatch(AdminRoleCode.AUDIT_READONLY::equals);
     }
 
+    /** 客服、运营、超管可执行履约写操作；财务与只读审计仅可查看 */
+    public boolean canManageFulfillment(Long adminUserId) {
+        return hasAnyRole(adminUserId,
+                AdminRoleCode.SUPER_ADMIN,
+                AdminRoleCode.OPS_ADMIN,
+                AdminRoleCode.CUSTOMER_SERVICE);
+    }
+
+    public boolean isSuperAdmin(Long adminUserId) {
+        return hasAnyRole(adminUserId, AdminRoleCode.SUPER_ADMIN);
+    }
+
+    public boolean canManageAdmins(Long adminUserId) {
+        return isSuperAdmin(adminUserId);
+    }
+
+    public boolean canViewAuditLogs(Long adminUserId) {
+        return hasAnyRole(adminUserId,
+                AdminRoleCode.SUPER_ADMIN,
+                AdminRoleCode.OPS_ADMIN,
+                AdminRoleCode.AUDIT_READONLY);
+    }
+
+    public boolean canForceOrderStatus(Long adminUserId) {
+        return hasAnyRole(adminUserId,
+                AdminRoleCode.SUPER_ADMIN,
+                AdminRoleCode.OPS_ADMIN);
+    }
+
+    /** 财务、超管可操作资金；只读审计仅查看 */
+    public boolean canViewFinance(Long adminUserId) {
+        return hasAnyRole(adminUserId,
+                AdminRoleCode.SUPER_ADMIN,
+                AdminRoleCode.FINANCE,
+                AdminRoleCode.AUDIT_READONLY);
+    }
+
+    public boolean canManageFinance(Long adminUserId) {
+        return hasAnyRole(adminUserId,
+                AdminRoleCode.SUPER_ADMIN,
+                AdminRoleCode.FINANCE);
+    }
+
+    public void requireViewFinance(Long adminUserId) {
+        if (!canViewFinance(adminUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权查看资金信息");
+        }
+    }
+
+    public void requireManageFinance(Long adminUserId) {
+        if (!canManageFinance(adminUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权操作资金");
+        }
+    }
+
+    public void requireManageAdmins(Long adminUserId) {
+        if (!canManageAdmins(adminUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "仅超级管理员可执行此操作");
+        }
+    }
+
     @Transactional
     public void assignRoleIfAbsent(Long adminUserId, String roleCode) {
         AdminRole role = roleRepo.findByRoleCode(roleCode)

@@ -40,6 +40,7 @@ public class AdminAuthController {
         String token = jwtTokenProvider.createAdminAccessToken(admin.getId(), admin.getUsername(), roles);
         return ApiResponse.ok(Map.of(
                 "accessToken", token,
+                "adminId", admin.getId(),
                 "username", admin.getUsername(),
                 "roles", roles
         ));

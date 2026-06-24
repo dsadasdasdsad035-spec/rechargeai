@@ -17,4 +17,8 @@ public interface AdminUserRoleRepository extends JpaRepository<AdminUserRole, Ad
     List<String> findRoleCodesByAdminUserId(@Param("adminUserId") Long adminUserId);
 
     boolean existsByAdminUserIdAndRoleId(Long adminUserId, Long roleId);
+
+    void deleteByAdminUserId(Long adminUserId);
+
+    List<AdminUserRole> findByAdminUserId(Long adminUserId);
 }

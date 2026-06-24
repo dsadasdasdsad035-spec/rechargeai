@@ -20,4 +20,11 @@ public interface PaymentChannelAdapter {
     default boolean isPaidCallback(Map<String, String> params) {
         return true;
     }
+
+    /**
+     * 发起渠道全额退款；默认不支持，各渠道适配器按需实现。
+     */
+    default ChannelRefundResult refund(String paymentNo, String thirdTradeNo, String refundNo, BigDecimal amount) {
+        return ChannelRefundResult.fail("渠道暂不支持退款");
+    }
 }

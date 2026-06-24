@@ -21,6 +21,8 @@ async function login() {
       password: password.value,
     })
     localStorage.setItem('adminToken', data.data.accessToken)
+    localStorage.setItem('adminId', String(data.data.adminId))
+    localStorage.setItem('adminRoles', JSON.stringify(data.data.roles ?? []))
     ElMessage.success('登录成功')
     router.push('/orders')
   } catch {

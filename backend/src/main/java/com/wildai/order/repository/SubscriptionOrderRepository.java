@@ -56,4 +56,9 @@ public interface SubscriptionOrderRepository extends JpaRepository<SubscriptionO
                                               Pageable pageable);
 
     List<SubscriptionOrder> findByOrderStatusAndExpiredAtBefore(String orderStatus, Instant before);
+
+    @Query("SELECT COALESCE(SUM(o.amount), 0) FROM SubscriptionOrder o WHERE o.orderStatus = :orderStatus")
+    java.math.BigDecimal sumAmountByOrderStatus(@Param("orderStatus") String orderStatus);
+
+    long countByOrderStatus(String orderStatus);
 }

@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import StatusBadge from './ui/StatusBadge.vue'
 import BaseButton from './ui/BaseButton.vue'
 import FulfillmentSupplementForm from './FulfillmentSupplementForm.vue'
+import RefundApplyForm from './RefundApplyForm.vue'
 import { confirmFulfillment } from '../services/fulfillmentApi'
 import { getOrderDetail } from '../services/orderApi'
 import {
   ORDER_STATUS_LABEL,
   PAYMENT_STATUS_LABEL,
   FULFILLMENT_STATUS_LABEL,
+  REFUND_STATUS_LABEL,
   orderStatusTone,
   paymentStatusTone,
 } from '../utils/statusLabels'
@@ -31,6 +33,8 @@ interface OrderDetail {
   subscriptionStart?: string
   subscriptionEnd?: string
   fulfillmentLogs?: FulfillmentLog[]
+  refundNo?: string
+  refundStatus?: string
 }
 
 const props = defineProps<{
@@ -42,11 +46,27 @@ const emit = defineEmits<{ close: [] }>()
 const visible = ref(false)
 const detail = ref<OrderDetail | null>(null)
 const confirmLoading = ref(false)
+const showRefundForm = ref(false)
+
+const ACTIVE_REFUND_STATUSES = ['PENDING', 'APPROVED', 'REFUNDING', 'CHANNEL_REFUND_FAILED']
+
+const canApplyRefund = computed(() => {
+  if (!detail.value) return false
+  if (detail.value.orderStatus !== 'FAILED') return false
+  if (detail.value.paymentStatus !== 'PAID') return false
+  if (!detail.value.refundStatus) return true
+  return detail.value.refundStatus === 'REJECTED'
+})
+
+const hasActiveRefund = computed(() =>
+  detail.value?.refundStatus ? ACTIVE_REFUND_STATUSES.includes(detail.value.refundStatus) : false,
+)
 
 watch(
   () => props.order,
   async (val) => {
     visible.value = !!val
+    showRefundForm.value = false
     if (val) {
       await reloadDetail(val.orderNo)
     } else {
@@ -54,6 +74,13 @@ watch(
     }
   },
 )
+
+async function onRefundSubmitted() {
+  showRefundForm.value = false
+  if (detail.value) {
+    await reloadDetail(detail.value.orderNo)
+  }
+}
 
 async function reloadDetail(orderNo: string) {
   const { data } = await getOrderDetail(orderNo)
@@ -171,6 +198,46 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
               <BaseButton variant="secondary" block :disabled="confirmLoading" @click="onConfirm">
                 {{ confirmLoading ? '提交中…' : '我已完成，确认提交' }}
               </BaseButton>
+            </section>
+
+            <section v-if="detail.refundStatus" class="refund-status">
+              <h4 class="section-title">退款申请</h4>
+              <div class="detail-row">
+                <span class="detail-label">退款单号</span>
+                <span class="detail-value detail-value--mono">{{ detail.refundNo }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">状态</span>
+                <StatusBadge
+                  :label="REFUND_STATUS_LABEL[detail.refundStatus] ?? detail.refundStatus"
+                  :tone="detail.refundStatus === 'COMPLETED' ? 'success' : detail.refundStatus === 'REJECTED' ? 'danger' : 'warning'"
+                />
+              </div>
+            </section>
+
+            <section v-if="canApplyRefund" class="refund-actions">
+              <h4 class="section-title">申请退款</h4>
+              <p v-if="detail.refundStatus === 'REJECTED'" class="section-hint">
+                上次申请已被驳回，您可重新提交退款申请。
+              </p>
+              <BaseButton
+                v-if="!showRefundForm"
+                variant="primary"
+                block
+                @click="showRefundForm = true"
+              >
+                申请全额退款
+              </BaseButton>
+              <RefundApplyForm
+                v-else
+                :order-no="detail.orderNo"
+                :amount="detail.amount"
+                @submitted="onRefundSubmitted"
+              />
+            </section>
+
+            <section v-else-if="detail.orderStatus === 'FAILED' && hasActiveRefund" class="refund-actions">
+              <p class="section-hint">退款申请处理中，请耐心等待审核结果。</p>
             </section>
           </div>
 
@@ -359,6 +426,15 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .fulfillment-actions {
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.refund-status,
+.refund-actions {
   padding-top: var(--space-sm);
   border-top: 1px solid var(--color-border);
   display: flex;

@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: RechargeAi 订阅助手 - 管理端 API（二期）
+  version: 2.0.0
+  description: |
+    二期扩展：履约任务、退款审核、RBAC、审计日志、订单强制改状态。
+    一期契约见 api-admin-phase1.openapi.yaml。
+
+servers:
+  - url: /admin/api
+    description: 管理端 API 前缀
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /fulfillment-tasks:
+    get:
+      summary: 履约任务列表
+      tags: [Fulfillment]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: assigneeAdminId, in: query, schema: { type: integer } }
+        - { name: orderNo, in: query, schema: { type: string } }
+        - { name: pageNo, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 20 } }
+
+  /fulfillment-tasks/{taskNo}:
+    get:
+      summary: 履约任务详情
+      tags: [Fulfillment]
+      security: [{ bearerAuth: [] }]
+
+  /fulfillment-tasks/{taskNo}/assign:
+    post:
+      summary: 分派履约任务
+      tags: [Fulfillment]
+      security: [{ bearerAuth: [] }]
+
+  /fulfillment-tasks/{taskNo}/success:
+    post:
+      summary: 标记履约成功
+      tags: [Fulfillment]
+      security: [{ bearerAuth: [] }]
+
+  /fulfillment-tasks/{taskNo}/fail:
+    post:
+      summary: 标记履约失败
+      tags: [Fulfillment]
+      security: [{ bearerAuth: [] }]
+
+  /refunds:
+    get:
+      summary: 退款申请列表
+      tags: [Refund]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: orderNo, in: query, schema: { type: string } }
+        - { name: refundNo, in: query, schema: { type: string } }
+        - { name: pageNo, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 20 } }
+
+  /refunds/{refundNo}:
+    get:
+      summary: 退款详情
+      tags: [Refund]
+      security: [{ bearerAuth: [] }]
+
+  /refunds/{refundNo}/approve:
+    post:
+      summary: 审核通过并发起渠道退款
+      tags: [Refund]
+      security: [{ bearerAuth: [] }]
+
+  /refunds/{refundNo}/reject:
+    post:
+      summary: 驳回退款申请
+      tags: [Refund]
+      security: [{ bearerAuth: [] }]
+
+  /refunds/{refundNo}/retry-channel:
+    post:
+      summary: 重试渠道退款
+      tags: [Refund]
+      security: [{ bearerAuth: [] }]
+
+  /roles:
+    get:
+      summary: 角色列表
+      tags: [RBAC]
+      security: [{ bearerAuth: [] }]
+
+  /admins:
+    get:
+      summary: 管理员列表（含角色）
+      tags: [RBAC]
+      security: [{ bearerAuth: [] }]
+    post:
+      summary: 新建管理员（超管）
+      tags: [RBAC]
+      security: [{ bearerAuth: [] }]
+
+  /admins/{id}/roles:
+    put:
+      summary: 设置管理员角色（超管）
+      tags: [RBAC]
+      security: [{ bearerAuth: [] }]
+
+  /admins/{id}/status:
+    post:
+      summary: 启用/禁用管理员（超管）
+      tags: [RBAC]
+      security: [{ bearerAuth: [] }]
+
+  /audit-logs:
+    get:
+      summary: 审计日志查询
+      tags: [Audit]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: operatorId, in: query, schema: { type: integer } }
+        - { name: operationType, in: query, schema: { type: string } }
+        - { name: targetType, in: query, schema: { type: string } }
+        - { name: targetId, in: query, schema: { type: string } }
+        - { name: startTime, in: query, schema: { type: string, format: date-time } }
+        - { name: endTime, in: query, schema: { type: string, format: date-time } }
+        - { name: pageNo, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 20 } }
+
+  /orders/{orderNo}/force-status:
+    post:
+      summary: 强制修改订单/支付/履约状态（含审计）
+      tags: [Order]
+      security: [{ bearerAuth: [] }]
+      description: 仅超级管理员与运营管理员；须填写变更原因
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                orderStatus: { type: string }
+                paymentStatus: { type: string }
+                fulfillmentStatus: { type: string }
+                reason: { type: string, maxLength: 512 }

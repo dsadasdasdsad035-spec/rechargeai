@@ -67,6 +67,11 @@ wildai:
       return-url: ${XUNHUPAY_RETURN_URL:}
       callback-url: ${XUNHUPAY_CALLBACK_URL:}
       timeout-seconds: ${XUNHUPAY_TIMEOUT_SECONDS:10}
+  finance:
+    min-withdraw-amount: 100
+    max-daily-withdraw-amount: 50000
+    max-pending-withdrawals: 3
+    payout-timeout-days: 7
 
 logging:
   level:

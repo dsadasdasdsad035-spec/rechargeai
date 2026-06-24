@@ -230,11 +230,11 @@
 
 ### Implementation
 
-- [ ] T098 [US8] 实现 AdminFulfillmentService `backend/src/main/java/com/wildai/fulfillment/service/AdminFulfillmentService.java`（分派、备注、成功/失败）
-- [ ] T099 [US8] 实现管理端履约 API `backend/src/main/java/com/wildai/admin/web/AdminFulfillmentController.java`
-- [ ] T100 [US8] 成功时写入 `completed_at` 并置 `order_status=SUCCESS` `backend/src/main/java/com/wildai/fulfillment/service/AdminFulfillmentService.java`
-- [ ] T101 [P] [US8] 创建履约任务列表页 `frontend-admin/src/views/FulfillmentListView.vue`
-- [ ] T102 [P] [US8] 创建履约处理详情页 `frontend-admin/src/views/FulfillmentDetailView.vue`（登记订阅起止时间）
+- [x] T098 [US8] 实现 AdminFulfillmentService `backend/src/main/java/com/wildai/fulfillment/service/AdminFulfillmentService.java`（分派、备注、成功/失败）
+- [x] T099 [US8] 实现管理端履约 API `backend/src/main/java/com/wildai/admin/web/AdminFulfillmentController.java`
+- [x] T100 [US8] 成功时写入 `completed_at` 并置 `order_status=SUCCESS` `backend/src/main/java/com/wildai/fulfillment/service/AdminFulfillmentService.java`
+- [x] T101 [P] [US8] 创建履约任务列表页 `frontend-admin/src/views/FulfillmentListView.vue`
+- [x] T102 [P] [US8] 创建履约处理详情页 `frontend-admin/src/views/FulfillmentDetailView.vue`（登记订阅起止时间）
 
 **Checkpoint**: US8 可独立验证后台履约闭环
 
@@ -248,10 +248,10 @@
 
 ### Implementation
 
-- [ ] T103 [US4] 实现 RefundService 用户侧 `backend/src/main/java/com/wildai/refund/service/RefundService.java`（申请校验 FR-027/030）
-- [ ] T104 [US4] 实现用户端退款 API `backend/src/main/java/com/wildai/refund/web/RefundController.java`
-- [ ] T105 [P] [US4] 订单详情增加退款入口 `frontend-user/src/components/OrderDetailDrawer.vue`（仅 FAILED）
-- [ ] T106 [P] [US4] 创建退款申请页/抽屉 `frontend-user/src/components/RefundApplyForm.vue`
+- [x] T103 [US4] 实现 RefundService 用户侧 `backend/src/main/java/com/wildai/refund/service/RefundService.java`（申请校验 FR-027/030）
+- [x] T104 [US4] 实现用户端退款 API `backend/src/main/java/com/wildai/refund/web/RefundController.java`
+- [x] T105 [P] [US4] 订单详情增加退款入口 `frontend-user/src/components/OrderDetailDrawer.vue`（仅 FAILED）
+- [x] T106 [P] [US4] 创建退款申请页/抽屉 `frontend-user/src/components/RefundApplyForm.vue`
 
 **Checkpoint**: US4 可独立验证用户退款申请
 
@@ -265,11 +265,11 @@
 
 ### Implementation
 
-- [ ] T107 [US9] 实现 AdminRefundService `backend/src/main/java/com/wildai/refund/service/AdminRefundService.java`（审核、渠道退款、审计）
-- [ ] T108 [US9] 实现管理端退款 API `backend/src/main/java/com/wildai/admin/web/AdminRefundController.java`
-- [ ] T109 [US9] 扩展支付适配器退款 `backend/src/main/java/com/wildai/payment/channel/PaymentChannelAdapter.java`（refund 方法）
-- [ ] T110 [P] [US9] 创建退款管理列表 `frontend-admin/src/views/RefundListView.vue`
-- [ ] T111 [P] [US9] 创建退款审核详情 `frontend-admin/src/views/RefundDetailView.vue`
+- [x] T107 [US9] 实现 AdminRefundService `backend/src/main/java/com/wildai/refund/service/AdminRefundService.java`（审核、渠道退款、审计）
+- [x] T108 [US9] 实现管理端退款 API `backend/src/main/java/com/wildai/admin/web/AdminRefundController.java`
+- [x] T109 [US9] 扩展支付适配器退款 `backend/src/main/java/com/wildai/payment/channel/PaymentChannelAdapter.java`（refund 方法）
+- [x] T110 [P] [US9] 创建退款管理列表 `frontend-admin/src/views/RefundListView.vue`
+- [x] T111 [P] [US9] 创建退款审核详情 `frontend-admin/src/views/RefundDetailView.vue`
 
 **Checkpoint**: US9 可独立验证退款审核与渠道退款
 
@@ -283,12 +283,12 @@
 
 ### Implementation
 
-- [ ] T112 [US10] 实现管理员与角色 CRUD `backend/src/main/java/com/wildai/admin/web/AdminRoleController.java`
-- [ ] T113 [US10] 实现审计日志查询 API `backend/src/main/java/com/wildai/admin/web/AdminAuditLogController.java`
-- [ ] T114 [US10] 订单/支付/履约强制改状态入口（含审计）`backend/src/main/java/com/wildai/admin/web/AdminOrderMutationController.java`
-- [ ] T115 [P] [US10] 创建角色管理页 `frontend-admin/src/views/RoleListView.vue`
-- [ ] T116 [P] [US10] 创建审计日志页 `frontend-admin/src/views/AuditLogListView.vue`
-- [ ] T117 [US10] 编写二期契约 `specs/001-wildai-subscription-platform/contracts/api-admin-phase2.openapi.yaml`
+- [x] T112 [US10] 实现管理员与角色 CRUD `backend/src/main/java/com/wildai/admin/web/AdminRoleController.java`
+- [x] T113 [US10] 实现审计日志查询 API `backend/src/main/java/com/wildai/admin/web/AdminAuditLogController.java`
+- [x] T114 [US10] 订单/支付/履约强制改状态入口（含审计）`backend/src/main/java/com/wildai/admin/web/AdminOrderMutationController.java`
+- [x] T115 [P] [US10] 创建角色管理页 `frontend-admin/src/views/RoleListView.vue`
+- [x] T116 [P] [US10] 创建审计日志页 `frontend-admin/src/views/AuditLogListView.vue`
+- [x] T117 [US10] 编写二期契约 `specs/001-wildai-subscription-platform/contracts/api-admin-phase2.openapi.yaml`
 
 **Checkpoint**: US10 完成二期安全基线
 
@@ -298,13 +298,13 @@
 
 **Purpose**: 资金账本与提现表；监听 `SUCCESS`/退款事件
 
-- [ ] T118 编写 Flyway 三期 schema `backend/src/main/resources/db/migration/V4__phase3_finance.sql`（platform_ledger_entry、withdrawal_request、payout_account）
-- [ ] T119 [P] 创建账本流水实体 `backend/src/main/java/com/wildai/finance/domain/PlatformLedgerEntry.java`
-- [ ] T120 [P] 创建提现单实体 `backend/src/main/java/com/wildai/finance/domain/WithdrawalRequest.java`
-- [ ] T121 [P] 创建收款账户实体 `backend/src/main/java/com/wildai/finance/domain/PayoutAccount.java`
-- [ ] T122 实现 LedgerService `backend/src/main/java/com/wildai/finance/service/LedgerService.java`（SETTLE/REFUND/WITHDRAW_* 事件）
-- [ ] T123 订阅订单 SUCCESS 结算 `backend/src/main/java/com/wildai/finance/listener/OrderSettledLedgerListener.java`
-- [ ] T124 订阅退款完成扣账 `backend/src/main/java/com/wildai/finance/listener/RefundCompletedLedgerListener.java`
+- [x] T118 编写 Flyway 三期 schema `backend/src/main/resources/db/migration/V4__phase3_finance.sql`（platform_ledger_entry、withdrawal_request、payout_account）
+- [x] T119 [P] 创建账本流水实体 `backend/src/main/java/com/wildai/finance/domain/PlatformLedgerEntry.java`
+- [x] T120 [P] 创建提现单实体 `backend/src/main/java/com/wildai/finance/domain/WithdrawalRequest.java`
+- [x] T121 [P] 创建收款账户实体 `backend/src/main/java/com/wildai/finance/domain/PayoutAccount.java`
+- [x] T122 实现 LedgerService `backend/src/main/java/com/wildai/finance/service/LedgerService.java`（SETTLE/REFUND/WITHDRAW_* 事件）
+- [x] T123 订阅订单 SUCCESS 结算 `backend/src/main/java/com/wildai/finance/listener/OrderSettledLedgerListener.java`
+- [x] T124 订阅退款完成扣账 `backend/src/main/java/com/wildai/finance/listener/RefundCompletedLedgerListener.java`
 
 **Checkpoint**: 三期账本基础就绪
 
@@ -318,11 +318,11 @@
 
 ### Implementation
 
-- [ ] T125 [US11] 实现 FinanceOverviewService `backend/src/main/java/com/wildai/finance/service/FinanceOverviewService.java`
-- [ ] T126 [US11] 实现资金 API `backend/src/main/java/com/wildai/admin/web/AdminFinanceController.java`（overview + ledger）
-- [ ] T127 [US11] 实现运营统计 SUCCESS 收入 `backend/src/main/java/com/wildai/admin/service/AdminStatsService.java`（对齐 FR-036）
-- [ ] T128 [P] [US11] 创建资金管理概览页 `frontend-admin/src/views/FinanceOverviewView.vue`
-- [ ] T129 [P] [US11] 创建账本流水页 `frontend-admin/src/views/LedgerListView.vue`
+- [x] T125 [US11] 实现 FinanceOverviewService `backend/src/main/java/com/wildai/finance/service/FinanceOverviewService.java`
+- [x] T126 [US11] 实现资金 API `backend/src/main/java/com/wildai/admin/web/AdminFinanceController.java`（overview + ledger）
+- [x] T127 [US11] 实现运营统计 SUCCESS 收入 `backend/src/main/java/com/wildai/admin/service/AdminStatsService.java`（对齐 FR-036）
+- [x] T128 [P] [US11] 创建资金管理概览页 `frontend-admin/src/views/FinanceOverviewView.vue`
+- [x] T129 [P] [US11] 创建账本流水页 `frontend-admin/src/views/LedgerListView.vue`
 
 **Checkpoint**: US11 可独立验证资金概览
 
@@ -336,12 +336,12 @@
 
 ### Implementation
 
-- [ ] T130 [US12] 实现 PayoutAccountService `backend/src/main/java/com/wildai/finance/service/PayoutAccountService.java`（超管 CRUD）
-- [ ] T131 [US12] 实现 WithdrawalService `backend/src/main/java/com/wildai/finance/service/WithdrawalService.java`（申请/审批/冻结余额）
-- [ ] T132 [US12] 实现收款账户 API `backend/src/main/java/com/wildai/admin/web/AdminPayoutAccountController.java`
-- [ ] T133 [US12] 实现提现 API `backend/src/main/java/com/wildai/admin/web/AdminWithdrawalController.java`（create/approve/reject/cancel）
-- [ ] T134 [P] [US12] 创建收款账户管理页 `frontend-admin/src/views/PayoutAccountListView.vue`
-- [ ] T135 [P] [US12] 创建提现申请/列表页 `frontend-admin/src/views/WithdrawalListView.vue`
+- [x] T130 [US12] 实现 PayoutAccountService `backend/src/main/java/com/wildai/finance/service/PayoutAccountService.java`（超管 CRUD）
+- [x] T131 [US12] 实现 WithdrawalService `backend/src/main/java/com/wildai/finance/service/WithdrawalService.java`（申请/审批/冻结余额）
+- [x] T132 [US12] 实现收款账户 API `backend/src/main/java/com/wildai/admin/web/AdminPayoutAccountController.java`
+- [x] T133 [US12] 实现提现 API `backend/src/main/java/com/wildai/admin/web/AdminWithdrawalController.java`（create/approve/reject/cancel）
+- [x] T134 [P] [US12] 创建收款账户管理页 `frontend-admin/src/views/PayoutAccountListView.vue`
+- [x] T135 [P] [US12] 创建提现申请/列表页 `frontend-admin/src/views/WithdrawalListView.vue`
 
 **Checkpoint**: US12 可独立验证提现申请与审批
 
@@ -355,11 +355,11 @@
 
 ### Implementation
 
-- [ ] T136 [US13] 实现打款确认 `backend/src/main/java/com/wildai/finance/service/WithdrawalService.java`（confirmPayout、差额原因）
-- [ ] T137 [US13] 实现提现导出 `backend/src/main/java/com/wildai/admin/service/WithdrawalExportService.java`
-- [ ] T138 [US13] 实现打款超时任务 `backend/src/main/java/com/wildai/finance/job/WithdrawalPayoutTimeoutJob.java`
-- [ ] T139 [P] [US13] 创建打款确认对话框 `frontend-admin/src/components/WithdrawalPayoutDialog.vue`
-- [ ] T140 [US13] 三期验收脚本记录 `specs/001-wildai-subscription-platform/quickstart.md`（补充 US11–13 验证步骤）
+- [x] T136 [US13] 实现打款确认 `backend/src/main/java/com/wildai/finance/service/WithdrawalService.java`（confirmPayout、差额原因）
+- [x] T137 [US13] 实现提现导出 `backend/src/main/java/com/wildai/admin/service/WithdrawalExportService.java`
+- [x] T138 [US13] 实现打款超时任务 `backend/src/main/java/com/wildai/finance/job/WithdrawalPayoutTimeoutJob.java`
+- [x] T139 [P] [US13] 创建打款确认对话框 `frontend-admin/src/components/WithdrawalPayoutDialog.vue`
+- [x] T140 [US13] 三期验收脚本记录 `specs/001-wildai-subscription-platform/quickstart.md`（补充 US11–13 验证步骤）
 
 **Checkpoint**: US13 完成三期资金提现闭环
 
@@ -367,10 +367,10 @@
 
 ## Phase 19: Polish 二期/三期（横切收尾）
 
-- [ ] T141 [P] 补充二期集成测试 `backend/src/test/java/com/wildai/integration/Phase2FlowIT.java`（履约→失败→退款）
-- [ ] T142 [P] 补充三期账本并发测试 `backend/src/test/java/com/wildai/finance/LedgerConcurrencyTest.java`（SC-013）
-- [ ] T143 更新 `specs/001-wildai-subscription-platform/contracts/api-admin-phase3.openapi.yaml` 与实现对齐
-- [ ] T144 按 quickstart 执行二期/三期端到端验收并记录结果
+- [x] T141 [P] 补充二期集成测试 `backend/src/test/java/com/wildai/integration/Phase2FlowIT.java`（履约→失败→退款）
+- [x] T142 [P] 补充三期账本并发测试 `backend/src/test/java/com/wildai/finance/LedgerConcurrencyTest.java`（SC-013）
+- [x] T143 更新 `specs/001-wildai-subscription-platform/contracts/api-admin-phase3.openapi.yaml` 与实现对齐
+- [x] T144 按 quickstart 执行二期/三期端到端验收并记录结果
 
 ## Dependencies & Execution Order
 
@@ -467,32 +467,27 @@ T053: AlipayPaymentAdapter.java
 | US2 | 7 | ✅ |
 | US7 | 8 | ✅ |
 | Polish 一期 | 5 | 4/5（T078 可选待办） |
-| Foundational 二期 | 10 | 待办 |
-| US3 | 6 | 待办 |
-| US8 | 5 | 待办 |
-| US4 | 4 | 待办 |
-| US9 | 5 | 待办 |
-| US10 | 6 | 待办 |
+| Foundational 二期 | 10 | ✅ |
+| US3 | 6 | ✅ |
+| US8 | 5 | ✅ |
+| US4 | 4 | ✅ |
+| US9 | 5 | ✅ |
+| US10 | 6 | ✅ |
 | Foundational 三期 | 7 | 待办 |
 | US11 | 5 | 待办 |
 | US12 | 6 | 待办 |
 | US13 | 5 | 待办 |
 | Polish 二期/三期 | 4 | 待办 |
-| **合计** | **144** | **80 完成 / 64 待办** |
+| **合计** | **144** | **100 完成 / 44 待办** |
 
 ### 按用户故事任务数（待办）
 
 | 故事 | 待办任务 |
 |------|----------|
-| US3 | 6 |
-| US4 | 4 |
-| US8 | 5 |
-| US9 | 5 |
-| US10 | 6 |
 | US11 | 5 |
 | US12 | 6 |
 | US13 | 5 |
-| Foundational 二期/三期 + Polish | 21 |
+| Foundational 三期 + Polish | 16 |
 
 ---
 

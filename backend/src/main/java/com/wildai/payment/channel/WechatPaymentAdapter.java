@@ -29,4 +29,9 @@ public class WechatPaymentAdapter implements PaymentChannelAdapter {
     public String extractThirdTradeNo(Map<String, String> params) {
         return params.getOrDefault("transaction_id", "WX" + UUID.randomUUID().toString().substring(0, 12));
     }
+
+    @Override
+    public ChannelRefundResult refund(String paymentNo, String thirdTradeNo, String refundNo, BigDecimal amount) {
+        return ChannelRefundResult.ok("WXRF" + UUID.randomUUID().toString().substring(0, 12));
+    }
 }

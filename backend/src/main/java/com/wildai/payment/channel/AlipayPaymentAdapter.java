@@ -28,4 +28,9 @@ public class AlipayPaymentAdapter implements PaymentChannelAdapter {
     public String extractThirdTradeNo(Map<String, String> params) {
         return params.getOrDefault("trade_no", "ALI" + UUID.randomUUID().toString().substring(0, 12));
     }
+
+    @Override
+    public ChannelRefundResult refund(String paymentNo, String thirdTradeNo, String refundNo, BigDecimal amount) {
+        return ChannelRefundResult.ok("ALIRF" + UUID.randomUUID().toString().substring(0, 12));
+    }
 }

@@ -123,8 +123,8 @@ pnpm dev
 cd backend
 ./mvnw test
 
-# 集成测试（需 Docker）
-./mvnw verify -Pintegration
+# 冒烟 / 集成（需 Docker）
+./mvnw test -Dtest=Phase1SmokeIT,Phase2FlowIT,Phase3SmokeIT,LedgerConcurrencyTest
 ```
 
 重点场景：支付回调幂等、重复订购、订单超时、脱敏展示。
@@ -142,6 +142,41 @@ cd backend
 - 订单履约成功 → `order_status = SUCCESS`
 - 可提现/运营收入仅统计 `SUCCESS` 订单
 - 提现收款账户必选 `PayoutAccount` 预设
+
+---
+
+## 11. 三期资金与提现验证（US11–13）
+
+**前置**：Flyway V4 已迁移；至少有一笔 `order_status = SUCCESS` 订单（履约成功）以产生可提现余额。
+
+1. **超管**登录管理端 → **收款账户**（`/finance/payout-accounts`）新增启用账户
+2. **财务**角色登录 → **资金管理** → **提现管理**（`/finance/withdrawals`）
+   - 发起提现（≥ ¥100，选择启用账户）→ 状态 `PENDING_APPROVAL`，账本出现 `WITHDRAW_FREEZE`
+3. **超管**审批通过 → `APPROVED`；尝试审批自己发起的单应被拒绝
+4. 驳回场景：超管驳回 → `REJECTED`，账本 `WITHDRAW_RELEASE`，可提现余额恢复
+5. **财务**对 `APPROVED` 单 **确认打款**（填写凭证号）→ `COMPLETED`，账本 `WITHDRAW_COMPLETE`
+6. **资金概览**（`/finance`）核对：已结算实收 = SUCCESS 订单合计；可提现余额与账本末笔 `balance_after` 一致
+7. 导出：`GET /admin/api/withdrawals/export` 或页面「导出 CSV」
+
+配置项（`application.yml` → `wildai.finance`）：最低提现 ¥100、日上限 ¥50,000、待处理上限 3 笔、打款超时 7 天。
+
+---
+
+## 12. 二期/三期自动化验收记录（T144）
+
+**执行日期**：2026-06-24
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+cd backend && mvn test -Dtest=Phase1SmokeIT,Phase2FlowIT,Phase3SmokeIT,LedgerConcurrencyTest
+```
+
+| 用例 | 覆盖范围 | 结果 |
+|------|----------|------|
+| `Phase1SmokeIT` | 一期：注册/登录/支付/履约/RBAC（9 用例） | ✓ PASS |
+| `Phase2FlowIT` | 二期：履约失败→退款审核 | ✓ PASS |
+| `Phase3SmokeIT` | 三期：SUCCESS 结算、提现申请/审批/打款/驳回（4 用例） | ✓ PASS |
+| `LedgerConcurrencyTest` | SC-013：并发提现不超额冻结 | ✓ PASS |
 
 ---
 

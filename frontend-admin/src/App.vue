@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, Goods, User, SwitchButton } from '@element-plus/icons-vue'
+import { Document, Goods, User, SwitchButton, List, Money, Key, Notebook, Wallet } from '@element-plus/icons-vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 const route = useRoute()
@@ -9,11 +9,18 @@ const router = useRouter()
 
 const activeMenu = computed(() => {
   if (route.path.startsWith('/products')) return '/products'
+  if (route.path.startsWith('/fulfillment')) return '/fulfillment'
+  if (route.path.startsWith('/refunds')) return '/refunds'
+  if (route.path.startsWith('/roles')) return '/roles'
+  if (route.path.startsWith('/audit-logs')) return '/audit-logs'
+  if (route.path.startsWith('/finance')) return '/finance'
   return route.path
 })
 
 function logout() {
   localStorage.removeItem('adminToken')
+  localStorage.removeItem('adminId')
+  localStorage.removeItem('adminRoles')
   router.push('/login')
 }
 </script>
@@ -39,6 +46,18 @@ function logout() {
             <el-icon><Document /></el-icon>
             <span>订单（只读）</span>
           </el-menu-item>
+          <el-menu-item index="/fulfillment">
+            <el-icon><List /></el-icon>
+            <span>履约任务</span>
+          </el-menu-item>
+          <el-menu-item index="/refunds">
+            <el-icon><Money /></el-icon>
+            <span>退款管理</span>
+          </el-menu-item>
+          <el-menu-item index="/finance">
+            <el-icon><Wallet /></el-icon>
+            <span>资金管理</span>
+          </el-menu-item>
           <el-menu-item index="/products">
             <el-icon><Goods /></el-icon>
             <span>产品管理</span>
@@ -46,6 +65,14 @@ function logout() {
           <el-menu-item index="/users">
             <el-icon><User /></el-icon>
             <span>用户管理</span>
+          </el-menu-item>
+          <el-menu-item index="/roles">
+            <el-icon><Key /></el-icon>
+            <span>角色管理</span>
+          </el-menu-item>
+          <el-menu-item index="/audit-logs">
+            <el-icon><Notebook /></el-icon>
+            <span>审计日志</span>
           </el-menu-item>
         </el-menu>
 

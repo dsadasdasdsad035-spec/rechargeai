@@ -12,5 +12,6 @@ public record OrderDetailDto(
         String thirdTradeNoMasked, Instant createdAt, Instant paidAt, Instant expiredAt,
         String fulfillmentTaskNo, String fulfillmentTaskStatus,
         Instant subscriptionStart, Instant subscriptionEnd,
-        List<FulfillmentLogDto> fulfillmentLogs
+        List<FulfillmentLogDto> fulfillmentLogs,
+        String refundNo, String refundStatus
 ) {}

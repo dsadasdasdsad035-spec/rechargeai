@@ -162,7 +162,8 @@ UNPAID/PAYING → PAY_FAILED
 
 ### refund_request
 
-仅 `fulfillment_status = FAILED` 时可创建；金额 = 订单实付全额。
+仅 `fulfillment_status = FAILED` 时可创建；金额 = 订单实付全额。  
+状态：`PENDING` → `APPROVED` | `REJECTED`；`APPROVED` → `REFUNDING` → `COMPLETED` | `CHANNEL_REFUND_FAILED`（渠道自动重试 3 次仍失败，待人工处理）。
 
 ### admin_operation_log
 

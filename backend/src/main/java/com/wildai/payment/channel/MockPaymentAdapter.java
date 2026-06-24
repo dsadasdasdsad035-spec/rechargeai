@@ -34,4 +34,9 @@ public class MockPaymentAdapter implements PaymentChannelAdapter {
     public String extractThirdTradeNo(Map<String, String> params) {
         return params.get("tradeNo");
     }
+
+    @Override
+    public ChannelRefundResult refund(String paymentNo, String thirdTradeNo, String refundNo, BigDecimal amount) {
+        return ChannelRefundResult.ok("MOCKRF" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+    }
 }

@@ -3,9 +3,11 @@ info:
   title: RechargeAi 订阅助手 - 管理端 API（三期 · 资金与提现）
   version: 3.0.0
   description: |
-    设计契约，三期实现。依赖二期 RBAC/审计与退款闭环。
+    三期实现契约，与 backend 管理端控制器对齐。
+    依赖二期 RBAC/审计与退款闭环。
     可提现余额仅含 order_status=SUCCESS 订单实收。
-    提现收款账户必选 PayoutAccount 预设。
+    统一响应包装：`{ code, message, data, traceId }`，成功时 code=0。
+    分页参数：`pageNo`（从 1 起）、`pageSize`；分页结果：`{ pageNo, pageSize, total, items }`。
 
 servers:
   - url: /admin/api
@@ -19,25 +21,44 @@ components:
       bearerFormat: JWT
 
   schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code: { type: string, example: "0" }
+        message: { type: string }
+        data: {}
+        traceId: { type: string, nullable: true }
+
+    PageResult:
+      type: object
+      properties:
+        pageNo: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer, format: int64 }
+        items: { type: array, items: {} }
+
     FinanceOverview:
       type: object
       properties:
-        settledRevenue:
-          type: number
-          format: decimal
-          description: 已结算实收（SUCCESS 订单）
-        totalRefunded:
-          type: number
-          format: decimal
-        availableBalance:
-          type: number
-          format: decimal
-        frozenForWithdrawal:
-          type: number
-          format: decimal
-        totalWithdrawn:
-          type: number
-          format: decimal
+        settledRevenue: { type: number, format: decimal, description: SUCCESS 订单累计实收 }
+        totalRefunded: { type: number, format: decimal }
+        availableBalance: { type: number, format: decimal }
+        frozenForWithdrawal: { type: number, format: decimal }
+        totalWithdrawn: { type: number, format: decimal }
+
+    LedgerEntry:
+      type: object
+      properties:
+        entryNo: { type: string }
+        entryType:
+          type: string
+          enum: [SETTLE, REFUND, WITHDRAW_FREEZE, WITHDRAW_RELEASE, WITHDRAW_COMPLETE]
+        amount: { type: number, format: decimal }
+        balanceAfter: { type: number, format: decimal }
+        refType: { type: string, enum: [ORDER, REFUND, WITHDRAWAL] }
+        refId: { type: string }
+        orderId: { type: integer, format: int64, nullable: true }
+        createdAt: { type: string, format: date-time }
 
     PayoutAccountSummary:
       type: object
@@ -45,27 +66,78 @@ components:
         id: { type: integer, format: int64 }
         accountName: { type: string }
         bankName: { type: string }
-        accountLast4: { type: string }
+        accountLast4: { type: string, description: 账号后四位 }
         enabled: { type: boolean }
 
-    WithdrawalRequest:
+    PayoutAccountCreateRequest:
+      type: object
+      required: [accountName, bankName, accountNo]
+      properties:
+        accountName: { type: string }
+        bankName: { type: string }
+        accountNo: { type: string, description: 明文账号，服务端 AES 加密存储 }
+
+    PayoutAccountUpdateRequest:
+      type: object
+      properties:
+        accountName: { type: string }
+        bankName: { type: string }
+        accountNo: { type: string }
+        enabled: { type: boolean }
+
+    WithdrawalSummary:
       type: object
       properties:
         withdrawalNo: { type: string }
         amount: { type: number, format: decimal }
-        actualAmount: { type: number, format: decimal }
+        actualAmount: { type: number, format: decimal, nullable: true }
         status:
           type: string
-          enum:
-            - PENDING_APPROVAL
-            - APPROVED
-            - REJECTED
-            - CANCELLED
-            - COMPLETED
-            - PAYOUT_TIMEOUT
+          enum: [PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED, COMPLETED, PAYOUT_TIMEOUT]
         payoutAccountId: { type: integer, format: int64 }
+        payoutAccountSummary: { type: string }
+        applicantAdminId: { type: integer, format: int64 }
         applicantName: { type: string }
         appliedAt: { type: string, format: date-time }
+
+    WithdrawalDetail:
+      allOf:
+        - $ref: '#/components/schemas/WithdrawalSummary'
+        - type: object
+          properties:
+            approverAdminId: { type: integer, format: int64, nullable: true }
+            approverName: { type: string, nullable: true }
+            payoutConfirmerId: { type: integer, format: int64, nullable: true }
+            payoutConfirmerName: { type: string, nullable: true }
+            externalVoucherNo: { type: string, nullable: true }
+            remark: { type: string, nullable: true }
+            rejectReason: { type: string, nullable: true }
+            varianceReason: { type: string, nullable: true }
+            approvedAt: { type: string, format: date-time, nullable: true }
+            paidAt: { type: string, format: date-time, nullable: true }
+
+    CreateWithdrawalRequest:
+      type: object
+      required: [amount, payoutAccountId]
+      properties:
+        amount: { type: number, format: decimal, minimum: 0.01 }
+        payoutAccountId: { type: integer, format: int64 }
+        remark: { type: string }
+
+    RejectWithdrawalRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string }
+
+    ConfirmPayoutRequest:
+      type: object
+      required: [actualAmount, paidAt, externalVoucherNo]
+      properties:
+        actualAmount: { type: number, format: decimal }
+        paidAt: { type: string, format: date-time }
+        externalVoucherNo: { type: string }
+        varianceReason: { type: string, description: 实际金额与申请不一致时必填 }
 
 paths:
   /finance/overview:
@@ -79,7 +151,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FinanceOverview'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FinanceOverview'
 
   /finance/ledger:
     get:
@@ -98,36 +175,87 @@ paths:
         - name: endTime
           in: query
           schema: { type: string, format: date-time }
-        - name: page
+        - name: pageNo
           in: query
-          schema: { type: integer, default: 0 }
-        - name: size
+          schema: { type: integer, default: 1 }
+        - name: pageSize
           in: query
           schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: OK
 
   /payout-accounts:
     get:
-      summary: 收款账户列表（超管维护，财务只读启用项）
+      summary: 收款账户列表
+      description: 超管可见全部；财务/审计默认仅启用项
       tags: [PayoutAccount]
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: enabledOnly
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: OK
     post:
       summary: 新增收款账户（超管）
       tags: [PayoutAccount]
       security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayoutAccountCreateRequest'
+      responses:
+        '200':
+          description: OK
 
   /payout-accounts/{id}:
     put:
       summary: 编辑/启用停用收款账户（超管）
       tags: [PayoutAccount]
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayoutAccountUpdateRequest'
+      responses:
+        '200':
+          description: OK
 
   /withdrawals:
     get:
       summary: 提现单列表
       tags: [Withdrawal]
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED, COMPLETED, PAYOUT_TIMEOUT]
+        - name: withdrawalNo
+          in: query
+          schema: { type: string }
+        - name: pageNo
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: OK
     post:
-      summary: 创建提现申请（财务）
+      summary: 创建提现申请（财务/超管）
       tags: [Withdrawal]
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -135,58 +263,102 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [amount, payoutAccountId]
-              properties:
-                amount: { type: number, format: decimal }
-                payoutAccountId: { type: integer, format: int64 }
-                remark: { type: string }
+              $ref: '#/components/schemas/CreateWithdrawalRequest'
+      responses:
+        '200':
+          description: OK
+
+  /withdrawals/export:
+    get:
+      summary: 导出提现单 CSV
+      tags: [Withdrawal]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: text/csv
+
+  /withdrawals/{withdrawalNo}:
+    get:
+      summary: 提现单详情
+      tags: [Withdrawal]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: withdrawalNo
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
 
   /withdrawals/{withdrawalNo}/approve:
     post:
-      summary: 审批通过（超管）
+      summary: 审批通过（超管，不可自审）
       tags: [Withdrawal]
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: withdrawalNo
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
 
   /withdrawals/{withdrawalNo}/reject:
     post:
       summary: 审批驳回（超管）
       tags: [Withdrawal]
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: withdrawalNo
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [reason]
-              properties:
-                reason: { type: string }
+              $ref: '#/components/schemas/RejectWithdrawalRequest'
+      responses:
+        '200':
+          description: OK
 
   /withdrawals/{withdrawalNo}/confirm-payout:
     post:
-      summary: 确认打款（财务）
+      summary: 确认打款（财务/超管）
       tags: [Withdrawal]
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: withdrawalNo
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [actualAmount, paidAt, externalVoucherNo]
-              properties:
-                actualAmount: { type: number, format: decimal }
-                paidAt: { type: string, format: date-time }
-                externalVoucherNo: { type: string }
-                varianceReason: { type: string }
+              $ref: '#/components/schemas/ConfirmPayoutRequest'
+      responses:
+        '200':
+          description: OK
 
   /withdrawals/{withdrawalNo}/cancel:
     post:
-      summary: 取消提现（申请人或超管，限定状态）
+      summary: 取消提现（申请人或超管，仅 PENDING_APPROVAL）
       tags: [Withdrawal]
       security: [{ bearerAuth: [] }]
-
-  /withdrawals/export:
-    get:
-      summary: 导出提现单
-      tags: [Withdrawal]
-      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: withdrawalNo
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK

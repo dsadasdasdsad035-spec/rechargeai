@@ -10,6 +10,7 @@ public class WildAiProperties {
     private Order order = new Order();
     private Mail mail = new Mail();
     private Payment payment = new Payment();
+    private Finance finance = new Finance();
 
     public Jwt getJwt() { return jwt; }
     public void setJwt(Jwt jwt) { this.jwt = jwt; }
@@ -21,6 +22,8 @@ public class WildAiProperties {
     public void setMail(Mail mail) { this.mail = mail; }
     public Payment getPayment() { return payment; }
     public void setPayment(Payment payment) { this.payment = payment; }
+    public Finance getFinance() { return finance; }
+    public void setFinance(Finance finance) { this.finance = finance; }
 
     public static class Jwt {
         private String secret;
@@ -93,5 +96,21 @@ public class WildAiProperties {
             public int getTimeoutSeconds() { return timeoutSeconds; }
             public void setTimeoutSeconds(int timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
         }
+    }
+
+    public static class Finance {
+        private java.math.BigDecimal minWithdrawAmount = new java.math.BigDecimal("100");
+        private java.math.BigDecimal maxDailyWithdrawAmount = new java.math.BigDecimal("50000");
+        private int maxPendingWithdrawals = 3;
+        private int payoutTimeoutDays = 7;
+
+        public java.math.BigDecimal getMinWithdrawAmount() { return minWithdrawAmount; }
+        public void setMinWithdrawAmount(java.math.BigDecimal v) { this.minWithdrawAmount = v; }
+        public java.math.BigDecimal getMaxDailyWithdrawAmount() { return maxDailyWithdrawAmount; }
+        public void setMaxDailyWithdrawAmount(java.math.BigDecimal v) { this.maxDailyWithdrawAmount = v; }
+        public int getMaxPendingWithdrawals() { return maxPendingWithdrawals; }
+        public void setMaxPendingWithdrawals(int v) { this.maxPendingWithdrawals = v; }
+        public int getPayoutTimeoutDays() { return payoutTimeoutDays; }
+        public void setPayoutTimeoutDays(int v) { this.payoutTimeoutDays = v; }
     }
 }

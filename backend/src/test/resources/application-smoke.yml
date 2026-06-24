@@ -14,6 +14,11 @@ wildai:
     enabled: false
   payment:
     mock-enabled: true
+  finance:
+    min-withdraw-amount: 100
+    max-daily-withdraw-amount: 50000
+    max-pending-withdrawals: 20
+    payout-timeout-days: 7
 
 logging:
   level:

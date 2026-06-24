@@ -8,6 +8,7 @@ import com.wildai.common.util.DesensitizeUtil;
 import com.wildai.fulfillment.dto.FulfillmentLogDto;
 import com.wildai.fulfillment.repository.FulfillmentLogRepository;
 import com.wildai.fulfillment.repository.FulfillmentTaskRepository;
+import com.wildai.refund.repository.RefundRequestRepository;
 import com.wildai.order.domain.SubscriptionOrder;
 import com.wildai.order.dto.OrderDetailDto;
 import com.wildai.order.dto.OrderSummaryDto;
@@ -33,17 +34,20 @@ public class OrderQueryService {
     private final AesEncryptUtil aesEncryptUtil;
     private final FulfillmentTaskRepository fulfillmentTaskRepo;
     private final FulfillmentLogRepository fulfillmentLogRepo;
+    private final RefundRequestRepository refundRequestRepo;
 
     public OrderQueryService(SubscriptionOrderRepository orderRepo, AiServiceProductRepository productRepo,
                              PaymentTransactionRepository paymentRepo, AesEncryptUtil aesEncryptUtil,
                              FulfillmentTaskRepository fulfillmentTaskRepo,
-                             FulfillmentLogRepository fulfillmentLogRepo) {
+                             FulfillmentLogRepository fulfillmentLogRepo,
+                             RefundRequestRepository refundRequestRepo) {
         this.orderRepo = orderRepo;
         this.productRepo = productRepo;
         this.paymentRepo = paymentRepo;
         this.aesEncryptUtil = aesEncryptUtil;
         this.fulfillmentTaskRepo = fulfillmentTaskRepo;
         this.fulfillmentLogRepo = fulfillmentLogRepo;
+        this.refundRequestRepo = refundRequestRepo;
     }
 
     public PageResult<OrderSummaryDto> listUserOrders(Long userId, String orderStatus, String paymentStatus,
@@ -109,10 +113,19 @@ public class OrderQueryService {
                     .toList();
         }
 
+        String refundNo = null;
+        String refundStatus = null;
+        var refundOpt = refundRequestRepo.findFirstByOrderIdOrderByCreatedAtDesc(order.getId());
+        if (refundOpt.isPresent()) {
+            var refund = refundOpt.get();
+            refundNo = refund.getRefundNo();
+            refundStatus = refund.getStatus();
+        }
+
         return new OrderDetailDto(order.getOrderNo(), order.getProductId(), productName,
                 order.getAmount(), order.getCurrency(), account,
                 order.getOrderStatus(), order.getPaymentStatus(), order.getFulfillmentStatus(),
                 tradeMasked, order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt(),
-                taskNo, taskStatus, subStart, subEnd, logs);
+                taskNo, taskStatus, subStart, subEnd, logs, refundNo, refundStatus);
     }
 }
