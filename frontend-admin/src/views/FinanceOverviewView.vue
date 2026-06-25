@@ -34,6 +34,7 @@ onMounted(load)
       </div>
       <el-button type="primary" @click="router.push('/finance/ledger')">账本流水</el-button>
       <el-button @click="router.push('/finance/withdrawals')">提现管理</el-button>
+      <el-button @click="router.push('/finance/payout-accounts')">收款账户</el-button>
     </header>
 
     <el-row v-loading="loading" :gutter="16" class="stat-row">

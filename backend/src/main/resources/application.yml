@@ -34,6 +34,10 @@ spring:
             enable: true
           starttls:
             enable: false
+  servlet:
+    multipart:
+      max-file-size: 52MB
+      max-request-size: 52MB
 
 server:
   port: 8080
@@ -72,6 +76,10 @@ wildai:
     max-daily-withdraw-amount: 50000
     max-pending-withdrawals: 3
     payout-timeout-days: 7
+  tutorial:
+    upload-dir: ${WILDAI_TUTORIAL_UPLOAD_DIR:./uploads/tutorial}
+    max-image-bytes: ${WILDAI_TUTORIAL_MAX_IMAGE_BYTES:5242880}
+    max-video-bytes: ${WILDAI_TUTORIAL_MAX_VIDEO_BYTES:52428800}
 
 logging:
   level:

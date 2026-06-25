@@ -55,10 +55,16 @@ function logout() {
             <el-icon><Money /></el-icon>
             <span>退款管理</span>
           </el-menu-item>
-          <el-menu-item index="/finance">
-            <el-icon><Wallet /></el-icon>
-            <span>资金管理</span>
-          </el-menu-item>
+          <el-sub-menu index="/finance">
+            <template #title>
+              <el-icon><Wallet /></el-icon>
+              <span>资金管理</span>
+            </template>
+            <el-menu-item index="/finance">资金概览</el-menu-item>
+            <el-menu-item index="/finance/ledger">账本流水</el-menu-item>
+            <el-menu-item index="/finance/withdrawals">提现管理</el-menu-item>
+            <el-menu-item index="/finance/payout-accounts">收款账户</el-menu-item>
+          </el-sub-menu>
           <el-menu-item index="/products">
             <el-icon><Goods /></el-icon>
             <span>产品管理</span>

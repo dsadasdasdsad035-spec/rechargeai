@@ -21,7 +21,7 @@ echo "==> 构建前端..."
 (cd "$ROOT/frontend-admin" && npm run build)
 
 echo "==> 组装部署包..."
-mkdir -p "$DEPLOY/html/user" "$DEPLOY/html/admin"
+mkdir -p "$DEPLOY/html/user" "$DEPLOY/html/admin" "$DEPLOY/uploads/tutorial"
 cp "$ROOT/backend/target/wildai-backend-0.1.0-SNAPSHOT.jar" "$DEPLOY/"
 cp -r "$ROOT/frontend-user/dist/." "$DEPLOY/html/user/"
 cp -r "$ROOT/frontend-admin/dist/." "$DEPLOY/html/admin/"

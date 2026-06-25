@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import MarkdownEditor from '../components/MarkdownEditor.vue'
 import { listServiceTypes, updateServiceType, type ServiceTypeGuide } from '../services/serviceTypeApi'
 
 const items = ref<ServiceTypeGuide[]>([])
@@ -66,7 +67,7 @@ onMounted(load)
     <header class="admin-page__header">
       <div class="admin-page__header-text">
         <h2>服务类型教程</h2>
-        <p>按服务类型配置「确认订购」页展示的 AI 账号与 Token 获取教程</p>
+        <p>支持 Markdown 语法、图片与视频上传，内容展示在用户「确认订购」页</p>
       </div>
     </header>
 
@@ -86,25 +87,31 @@ onMounted(load)
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" :title="`编辑教程 · ${editing?.serviceType}`" width="640px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="`编辑教程 · ${editing?.serviceType}`"
+      width="760px"
+      destroy-on-close
+      top="5vh"
+    >
       <el-form label-position="top">
         <el-form-item label="显示名称" required>
           <el-input v-model="form.displayName" placeholder="如 ChatGPT" />
         </el-form-item>
-        <el-form-item label="如何获取 AI 账号">
-          <el-input
+        <el-form-item>
+          <MarkdownEditor
             v-model="form.accountTutorial"
-            type="textarea"
-            :rows="6"
-            placeholder="支持多行文本，将展示在用户「确认订购」页"
+            label="如何获取 AI 账号（Markdown）"
+            :rows="8"
+            placeholder="支持 **加粗**、列表、链接；可上传截图"
           />
         </el-form-item>
-        <el-form-item label="如何获取 Session Token">
-          <el-input
+        <el-form-item>
+          <MarkdownEditor
             v-model="form.tokenTutorial"
-            type="textarea"
-            :rows="8"
-            placeholder="说明如何从浏览器或官方渠道获取 Token"
+            label="如何获取 Session Token（Markdown）"
+            :rows="10"
+            placeholder="说明获取 Token 的步骤，建议配合截图"
           />
         </el-form-item>
       </el-form>

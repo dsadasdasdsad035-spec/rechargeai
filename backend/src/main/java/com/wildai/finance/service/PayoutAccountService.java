@@ -49,7 +49,7 @@ public class PayoutAccountService {
 
     @Transactional
     public PayoutAccountSummaryDto create(Long adminId, PayoutAccountCreateRequest req) {
-        rbacService.requireManageAdmins(adminId);
+        rbacService.requireManageFinance(adminId);
         PayoutAccount account = new PayoutAccount();
         account.setAccountName(req.accountName().trim());
         account.setBankName(req.bankName().trim());
@@ -61,7 +61,7 @@ public class PayoutAccountService {
 
     @Transactional
     public PayoutAccountSummaryDto update(Long adminId, Long id, PayoutAccountUpdateRequest req) {
-        rbacService.requireManageAdmins(adminId);
+        rbacService.requireManageFinance(adminId);
         PayoutAccount account = requireAccount(id);
         if (req.accountName() != null && !req.accountName().isBlank()) {
             account.setAccountName(req.accountName().trim());

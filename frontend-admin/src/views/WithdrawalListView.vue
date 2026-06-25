@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import WithdrawalPayoutDialog from '../components/WithdrawalPayoutDialog.vue'
 import { listPayoutAccounts, type PayoutAccount } from '../services/payoutApi'
@@ -14,6 +15,7 @@ import {
 } from '../services/withdrawalApi'
 
 const items = ref<WithdrawalSummary[]>([])
+const router = useRouter()
 const accounts = ref<PayoutAccount[]>([])
 const loading = ref(true)
 const status = ref('')
@@ -230,7 +232,11 @@ onMounted(async () => {
               :value="a.id"
             />
           </el-select>
-          <p v-if="!accounts.length" class="warn">暂无启用收款账户，请联系超管配置</p>
+          <p v-if="!accounts.length" class="warn">
+            暂无启用收款账户，请先到
+            <el-button link type="primary" @click="router.push('/finance/payout-accounts')">收款账户</el-button>
+            页面新增并启用
+          </p>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="createForm.remark" type="textarea" :rows="2" />

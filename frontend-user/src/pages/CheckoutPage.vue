@@ -4,7 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
 import BaseCard from '../components/ui/BaseCard.vue'
+import MarkdownContent from '../components/MarkdownContent.vue'
 import http from '../services/http'
+import { getApiErrorMessage } from '../utils/apiError'
 
 interface OrderField {
   key: string
@@ -26,6 +28,7 @@ const router = useRouter()
 const product = ref<any>(null)
 const fieldValues = ref<Record<string, string>>({})
 const submitting = ref(false)
+const submitError = ref('')
 
 const orderFields = computed<OrderField[]>(() => {
   if (!product.value?.requiredFieldsJson) return []
@@ -56,12 +59,15 @@ onMounted(async () => {
 
 async function submit() {
   submitting.value = true
+  submitError.value = ''
   try {
     const { data } = await http.post('/orders', {
       productId: Number(route.params.id),
       fields: fieldValues.value,
     })
     router.push(`/payment/${data.data.orderNo}`)
+  } catch (e: unknown) {
+    submitError.value = getApiErrorMessage(e, '提交订单失败，请稍后重试')
   } finally {
     submitting.value = false
   }
@@ -80,11 +86,11 @@ async function submit() {
         <h3 class="guide-title">{{ guide.displayName }} · 获取凭证教程</h3>
         <section v-if="guide.accountTutorial" class="guide-section">
           <h4>如何获取 AI 账号</h4>
-          <pre class="guide-text">{{ guide.accountTutorial }}</pre>
+          <MarkdownContent :source="guide.accountTutorial" />
         </section>
         <section v-if="guide.tokenTutorial" class="guide-section">
           <h4>如何获取 Session Token</h4>
-          <pre class="guide-text">{{ guide.tokenTutorial }}</pre>
+          <MarkdownContent :source="guide.tokenTutorial" />
         </section>
       </BaseCard>
 
@@ -99,6 +105,7 @@ async function submit() {
             :placeholder="field.placeholder ?? `请填写${field.label}`"
           />
           <p class="hint" role="note">请勿填写第三方服务登录密码；Session Token 将加密保存</p>
+          <p v-if="submitError" class="submit-error" role="alert">{{ submitError }}</p>
           <BaseButton type="submit" block :disabled="submitting">
             {{ submitting ? '提交中…' : '提交订单' }}
           </BaseButton>
@@ -132,18 +139,6 @@ async function submit() {
   color: var(--color-primary);
 }
 
-.guide-text {
-  margin: 0;
-  padding: var(--space-sm) var(--space-md);
-  font-family: inherit;
-  font-size: 0.8125rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  color: var(--color-text-muted);
-  background: var(--color-surface-muted, #f5f5f5);
-  border-radius: var(--radius-sm);
-}
-
 .checkout-card {
   max-width: 480px;
 }
@@ -158,6 +153,15 @@ async function submit() {
   font-size: 0.8125rem;
   color: var(--color-warning);
   background: var(--color-warning-bg);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+}
+
+.submit-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-danger, #c0392b);
+  background: var(--color-danger-bg, #fdecea);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
 }

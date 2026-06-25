@@ -22,19 +22,22 @@ const form = ref({
   enabled: true,
 })
 
-const isSuperAdmin = computed(() => {
+const roles = computed<string[]>(() => {
   try {
-    const r: string[] = JSON.parse(localStorage.getItem('adminRoles') ?? '[]')
-    return r.includes('SUPER_ADMIN')
+    return JSON.parse(localStorage.getItem('adminRoles') ?? '[]')
   } catch {
-    return false
+    return []
   }
 })
+
+const canManage = computed(() =>
+  roles.value.includes('SUPER_ADMIN') || roles.value.includes('FINANCE'),
+)
 
 async function load() {
   loading.value = true
   try {
-    const { data } = await listPayoutAccounts(!isSuperAdmin.value)
+    const { data } = await listPayoutAccounts(!canManage.value)
     accounts.value = data.data
   } finally {
     loading.value = false
@@ -90,6 +93,8 @@ async function submit() {
     }
     dialogVisible.value = false
     await load()
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message ?? '保存失败，请确认当前账号具备财务或超管权限')
   } finally {
     saving.value = false
   }
@@ -109,10 +114,19 @@ onMounted(load)
     <header class="admin-page__header">
       <div class="admin-page__header-text">
         <h2>收款账户</h2>
-        <p>超级管理员维护提现收款账户，财务创建提现时仅可选启用账户</p>
+        <p>财务或超级管理员维护平台提现收款账户；创建提现时从启用账户中选择</p>
       </div>
-      <el-button v-if="isSuperAdmin" type="primary" @click="openCreate">新增账户</el-button>
+      <el-button v-if="canManage" type="primary" @click="openCreate">新增账户</el-button>
     </header>
+
+    <el-alert
+      v-if="!canManage"
+      type="info"
+      show-icon
+      :closable="false"
+      title="当前账号仅可查看启用的收款账户。如需新增或编辑，请使用财务或超级管理员账号登录。"
+      style="margin-bottom: 16px"
+    />
 
     <el-table v-loading="loading" :data="accounts" stripe>
       <el-table-column prop="accountName" label="户名" width="140" />
@@ -127,7 +141,7 @@ onMounted(load)
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column v-if="isSuperAdmin" label="操作" width="180">
+      <el-table-column v-if="canManage" label="操作" width="180">
         <template #default="{ row }">
           <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
           <el-button link @click="toggleEnabled(row)">
