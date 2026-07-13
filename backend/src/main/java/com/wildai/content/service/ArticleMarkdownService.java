@@ -17,6 +17,7 @@ public class ArticleMarkdownService {
 
     private static final int GENERATED_SUMMARY_LIMIT = 220;
     private static final int MANUAL_SUMMARY_LIMIT = 500;
+    private static final String URL_VALIDATION_BASE_URI = "https://relative.invalid";
     private static final List<Extension> EXTENSIONS = List.of(TablesExtension.create());
 
     private final Parser parser = Parser.builder()
@@ -36,7 +37,7 @@ public class ArticleMarkdownService {
     public RenderedArticleContent render(String markdown, String manualSummary) {
         String source = markdown == null ? "" : markdown;
         String unsafeHtml = renderer.render(parser.parse(source));
-        String safeHtml = Jsoup.clean(unsafeHtml, "", safelist,
+        String safeHtml = Jsoup.clean(unsafeHtml, URL_VALIDATION_BASE_URI, safelist,
                 new Document.OutputSettings().prettyPrint(false));
 
         Document document = Jsoup.parseBodyFragment(safeHtml);
@@ -62,6 +63,11 @@ public class ArticleMarkdownService {
         if (value.length() <= max) {
             return value;
         }
-        return value.substring(0, max).stripTrailing();
+        int endIndex = max;
+        if (Character.isHighSurrogate(value.charAt(endIndex - 1))
+                && Character.isLowSurrogate(value.charAt(endIndex))) {
+            endIndex--;
+        }
+        return value.substring(0, endIndex).stripTrailing();
     }
 }
