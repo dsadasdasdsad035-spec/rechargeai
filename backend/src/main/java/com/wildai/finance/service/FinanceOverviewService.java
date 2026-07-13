@@ -1,6 +1,5 @@
 package com.wildai.finance.service;
 
-import com.wildai.admin.service.AdminStatsService;
 import com.wildai.admin.service.RbacService;
 import com.wildai.common.dto.PageResult;
 import com.wildai.finance.domain.LedgerEntryType;
@@ -9,6 +8,7 @@ import com.wildai.finance.dto.FinanceOverviewDto;
 import com.wildai.finance.dto.LedgerEntryDto;
 import com.wildai.finance.repository.PlatformLedgerEntryRepository;
 import com.wildai.finance.repository.WithdrawalRequestRepository;
+import com.wildai.refund.repository.RefundRequestRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -23,35 +23,35 @@ public class FinanceOverviewService {
     private static final Set<String> FROZEN_STATUSES = Set.of("PENDING_APPROVAL", "APPROVED");
 
     private final RbacService rbacService;
-    private final AdminStatsService statsService;
     private final LedgerService ledgerService;
     private final PlatformLedgerEntryRepository entryRepo;
     private final WithdrawalRequestRepository withdrawalRepo;
+    private final RefundRequestRepository refundRepo;
 
     public FinanceOverviewService(RbacService rbacService,
-                                  AdminStatsService statsService,
                                   LedgerService ledgerService,
                                   PlatformLedgerEntryRepository entryRepo,
-                                  WithdrawalRequestRepository withdrawalRepo) {
+                                  WithdrawalRequestRepository withdrawalRepo,
+                                  RefundRequestRepository refundRepo) {
         this.rbacService = rbacService;
-        this.statsService = statsService;
         this.ledgerService = ledgerService;
         this.entryRepo = entryRepo;
         this.withdrawalRepo = withdrawalRepo;
+        this.refundRepo = refundRepo;
     }
 
     public FinanceOverviewDto getOverview(Long adminId) {
         rbacService.requireViewFinance(adminId);
 
-        BigDecimal settledRevenue = statsService.getSettledRevenue();
-        BigDecimal refundSum = entryRepo.sumAmountByEntryType(LedgerEntryType.REFUND);
-        BigDecimal totalRefunded = refundSum.abs();
+        BigDecimal settledRevenue = entryRepo.sumAmountByEntryType(LedgerEntryType.SETTLE);
+        BigDecimal userRefunded = refundRepo.sumCompletedAmount();
         BigDecimal availableBalance = ledgerService.getAvailableBalance();
         BigDecimal frozenForWithdrawal = withdrawalRepo.sumAmountByStatusIn(FROZEN_STATUSES);
         BigDecimal totalWithdrawn = withdrawalRepo.sumCompletedWithdrawn();
 
         return new FinanceOverviewDto(
-                settledRevenue, totalRefunded, availableBalance, frozenForWithdrawal, totalWithdrawn);
+                settledRevenue, userRefunded,
+                availableBalance, frozenForWithdrawal, totalWithdrawn);
     }
 
     public PageResult<LedgerEntryDto> listLedger(Long adminId, String entryType,

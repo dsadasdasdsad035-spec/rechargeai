@@ -4,6 +4,8 @@ import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
 import com.wildai.order.domain.SubscriptionOrder;
 import com.wildai.order.repository.SubscriptionOrderRepository;
+import com.wildai.payment.dto.PaymentAmountSnapshot;
+import com.wildai.payment.service.PaymentAmountService;
 import com.wildai.refund.domain.RefundRequest;
 import com.wildai.refund.dto.RefundApplyRequest;
 import com.wildai.refund.dto.RefundRequestDto;
@@ -25,10 +27,13 @@ public class RefundService {
 
     private final RefundRequestRepository refundRepo;
     private final SubscriptionOrderRepository orderRepo;
+    private final PaymentAmountService paymentAmountService;
 
-    public RefundService(RefundRequestRepository refundRepo, SubscriptionOrderRepository orderRepo) {
+    public RefundService(RefundRequestRepository refundRepo, SubscriptionOrderRepository orderRepo,
+                         PaymentAmountService paymentAmountService) {
         this.refundRepo = refundRepo;
         this.orderRepo = orderRepo;
+        this.paymentAmountService = paymentAmountService;
     }
 
     @Transactional
@@ -39,22 +44,23 @@ public class RefundService {
         validateRefundable(order);
 
         RefundRequest refund = new RefundRequest();
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         refund.setRefundNo("RF" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
         refund.setOrderId(order.getId());
         refund.setUserId(userId);
-        refund.setAmount(order.getAmount());
+        refund.setAmount(amount.settlementAmount());
         refund.setStatus("PENDING");
         refund.setApplyReason(req.applyReason().trim());
         refund = refundRepo.save(refund);
 
-        return toDto(refund, order.getOrderNo());
+        return toDto(refund, order);
     }
 
     public RefundRequestDto getLatestForOrder(String orderNo, Long userId) {
         SubscriptionOrder order = orderRepo.findByOrderNoAndUserId(orderNo, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "订单不存在"));
         return refundRepo.findFirstByOrderIdOrderByCreatedAtDesc(order.getId())
-                .map(r -> toDto(r, order.getOrderNo()))
+                .map(r -> toDto(r, order))
                 .orElse(null);
     }
 
@@ -70,11 +76,13 @@ public class RefundService {
         }
     }
 
-    RefundRequestDto toDto(RefundRequest refund, String orderNo) {
+    RefundRequestDto toDto(RefundRequest refund, SubscriptionOrder order) {
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         return new RefundRequestDto(
                 refund.getRefundNo(),
-                orderNo,
+                order.getOrderNo(),
                 refund.getAmount(),
+                amount.settlementCurrency(),
                 refund.getStatus(),
                 refund.getApplyReason(),
                 refund.getReviewComment(),

@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/orders', component: () => import('../views/OrderListView.vue'), meta: { auth: true } },
     { path: '/fulfillment', component: () => import('../views/FulfillmentListView.vue'), meta: { auth: true } },
     { path: '/fulfillment/:taskNo', component: () => import('../views/FulfillmentDetailView.vue'), meta: { auth: true } },
+    { path: '/support', component: () => import('../views/SupportChatView.vue'), meta: { auth: true } },
     { path: '/refunds', component: () => import('../views/RefundListView.vue'), meta: { auth: true } },
     { path: '/refunds/:refundNo', component: () => import('../views/RefundDetailView.vue'), meta: { auth: true } },
     { path: '/users', component: () => import('../views/UserListView.vue'), meta: { auth: true } },
@@ -20,6 +21,8 @@ const router = createRouter({
     { path: '/finance/ledger', component: () => import('../views/LedgerListView.vue'), meta: { auth: true } },
     { path: '/finance/payout-accounts', component: () => import('../views/PayoutAccountListView.vue'), meta: { auth: true } },
     { path: '/finance/withdrawals', component: () => import('../views/WithdrawalListView.vue'), meta: { auth: true } },
+    { path: '/finance/settings', component: () => import('../views/PaymentSettingsView.vue'), meta: { auth: true } },
+    { path: '/settings', component: () => import('../views/SystemSettingsView.vue'), meta: { auth: true } },
   ],
 })
 

@@ -4,6 +4,7 @@ export interface RefundRequest {
   refundNo: string
   orderNo: string
   amount: number
+  currency: string
   status: string
   applyReason: string
   reviewComment: string | null

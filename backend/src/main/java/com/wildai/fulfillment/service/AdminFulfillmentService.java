@@ -22,6 +22,8 @@ import com.wildai.finance.event.OrderSettledEvent;
 import com.wildai.notify.service.NotifyService;
 import com.wildai.order.domain.SubscriptionOrder;
 import com.wildai.order.repository.SubscriptionOrderRepository;
+import com.wildai.payment.dto.PaymentAmountSnapshot;
+import com.wildai.payment.service.PaymentAmountService;
 import com.wildai.product.repository.AiServiceProductRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +43,7 @@ public class AdminFulfillmentService {
     private final FulfillmentLogRepository logRepo;
     private final SubscriptionOrderRepository orderRepo;
     private final AiServiceProductRepository productRepo;
+    private final PaymentAmountService paymentAmountService;
     private final AdminUserRepository adminUserRepo;
     private final RbacService rbacService;
     private final AuditLogService auditLogService;
@@ -51,6 +54,7 @@ public class AdminFulfillmentService {
                                    FulfillmentLogRepository logRepo,
                                    SubscriptionOrderRepository orderRepo,
                                    AiServiceProductRepository productRepo,
+                                   PaymentAmountService paymentAmountService,
                                    AdminUserRepository adminUserRepo,
                                    RbacService rbacService,
                                    AuditLogService auditLogService,
@@ -60,6 +64,7 @@ public class AdminFulfillmentService {
         this.logRepo = logRepo;
         this.orderRepo = orderRepo;
         this.productRepo = productRepo;
+        this.paymentAmountService = paymentAmountService;
         this.adminUserRepo = adminUserRepo;
         this.rbacService = rbacService;
         this.auditLogService = auditLogService;
@@ -184,8 +189,9 @@ public class AdminFulfillmentService {
                 "subscriptionEnd", req.subscriptionEnd().toString()
         ));
 
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         eventPublisher.publishEvent(new OrderSettledEvent(
-                order.getOrderNo(), order.getId(), order.getAmount()));
+                order.getOrderNo(), order.getId(), amount.settlementAmount()));
     }
 
     @Transactional
@@ -290,6 +296,7 @@ public class AdminFulfillmentService {
     private FulfillmentTaskDetailDto toDetail(FulfillmentTask task) {
         SubscriptionOrder order = requireOrder(task.getOrderId());
         String productName = productRepo.findById(order.getProductId()).map(p -> p.getName()).orElse("-");
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         var logs = logRepo.findByTaskIdOrderByCreatedAtAsc(task.getId()).stream()
                 .map(l -> new AdminFulfillmentLogDto(
                         l.getLogType(),
@@ -306,6 +313,9 @@ public class AdminFulfillmentService {
                 productName,
                 order.getAmount(),
                 order.getCurrency(),
+                amount.paidAmount(),
+                amount.paidCurrency(),
+                amount.exchangeRate(),
                 order.getOrderStatus(),
                 order.getPaymentStatus(),
                 order.getFulfillmentStatus(),

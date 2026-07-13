@@ -5,6 +5,7 @@ export interface AdminRefundSummary {
   orderNo: string
   userId: number
   amount: number
+  currency: string
   status: string
   applyReason: string
   createdAt: string

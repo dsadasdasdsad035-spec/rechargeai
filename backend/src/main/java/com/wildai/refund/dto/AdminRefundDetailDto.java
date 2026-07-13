@@ -10,6 +10,7 @@ public record AdminRefundDetailDto(
         String productName,
         String paymentChannel,
         BigDecimal amount,
+        String currency,
         String status,
         String applyReason,
         String reviewComment,

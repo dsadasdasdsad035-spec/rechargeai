@@ -7,6 +7,7 @@ public record RefundRequestDto(
         String refundNo,
         String orderNo,
         BigDecimal amount,
+        String currency,
         String status,
         String applyReason,
         String reviewComment,

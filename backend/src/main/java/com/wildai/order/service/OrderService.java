@@ -51,8 +51,9 @@ public class OrderService {
         productService.validateOrderFields(product, req.fields());
 
         String targetAccount = req.fields().getOrDefault("target_account", req.fields().get("targetAccount"));
-        if (targetAccount == null || targetAccount.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "AI 账号标识不能为空");
+        String accountToken = req.fields().get("account_token");
+        if (accountToken == null || accountToken.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "请填写 Session Token");
         }
 
         SubscriptionOrder order = new SubscriptionOrder();
@@ -61,11 +62,10 @@ public class OrderService {
         order.setProductId(product.getId());
         order.setAmount(product.getSalePrice());
         order.setCurrency(product.getCurrency());
-        order.setTargetAccountEnc(aesEncryptUtil.encrypt(targetAccount));
-        String accountToken = req.fields().get("account_token");
-        if (accountToken != null && !accountToken.isBlank()) {
-            order.setAccountTokenEnc(aesEncryptUtil.encrypt(accountToken.trim()));
+        if (targetAccount != null && !targetAccount.isBlank()) {
+            order.setTargetAccountEnc(aesEncryptUtil.encrypt(targetAccount.trim()));
         }
+        order.setAccountTokenEnc(aesEncryptUtil.encrypt(accountToken.trim()));
         order.setOrderStatus("WAIT_PAY");
         order.setPaymentStatus("UNPAID");
         order.setFulfillmentStatus("NOT_STARTED");

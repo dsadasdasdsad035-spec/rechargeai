@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import SupportChatWidget from './components/SupportChatWidget.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -70,6 +71,8 @@ function logout() {
   <main class="main">
     <RouterView />
   </main>
+
+  <SupportChatWidget v-if="auth.isLoggedIn" />
 </template>
 
 <style scoped>

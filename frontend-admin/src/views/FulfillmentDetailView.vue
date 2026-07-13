@@ -18,6 +18,7 @@ import {
   orderStatusType,
   canManageFulfillment,
 } from '../utils/statusLabels'
+import { formatMoney } from '../utils/money'
 
 const route = useRoute()
 const router = useRouter()
@@ -134,7 +135,13 @@ onMounted(load)
             {{ ORDER_STATUS_LABEL[detail.orderStatus] ?? detail.orderStatus }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="金额">¥{{ detail.amount }} {{ detail.currency }}</el-descriptions-item>
+        <el-descriptions-item label="订单金额">{{ formatMoney(detail.amount, detail.currency) }}</el-descriptions-item>
+        <el-descriptions-item label="实付金额">
+          {{ detail.paidAmount == null ? '-' : formatMoney(detail.paidAmount, detail.paidCurrency) }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detail.exchangeRate" label="支付汇率">
+          1 {{ detail.currency }} = {{ detail.exchangeRate }} {{ detail.paidCurrency }}
+        </el-descriptions-item>
         <el-descriptions-item label="处理人">{{ detail.assigneeName ?? '未分派' }}</el-descriptions-item>
         <el-descriptions-item v-if="detail.subscriptionStart" label="订阅开始">
           {{ new Date(detail.subscriptionStart).toLocaleString('zh-CN') }}

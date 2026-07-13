@@ -27,10 +27,10 @@ public class SubscriptionOrder {
     @Column(nullable = false, length = 16)
     private String currency = "CNY";
 
-    @Column(name = "target_account_enc", nullable = false, length = 512)
+    @Column(name = "target_account_enc", length = 512)
     private String targetAccountEnc;
 
-    @Column(name = "account_token_enc", length = 512)
+    @Column(name = "account_token_enc", columnDefinition = "TEXT")
     private String accountTokenEnc;
 
     @Column(name = "order_status", nullable = false, length = 32)

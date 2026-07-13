@@ -136,6 +136,118 @@ class XunhuPayPaymentAdapterTest {
         assertThat(adapter.verifyCallback(params, null)).isFalse();
     }
 
+    @Test
+    void refundPostsSignedJsonAndReturnsSuccessWhenRefunded() throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+        XunhuPayPaymentAdapter adapter = new XunhuPayPaymentAdapter(
+                properties(),
+                restTemplate,
+                Clock.fixed(Instant.ofEpochSecond(1_700_000_000L), ZoneOffset.UTC),
+                () -> "abc123abc123abc123abc123abc123ab"
+        );
+
+        Map<String, String> expectedBody = new LinkedHashMap<>();
+        expectedBody.put("appid", "app-001");
+        expectedBody.put("reason", "RechargeAi 退款 RF1001");
+        expectedBody.put("time", "1700000000");
+        expectedBody.put("nonce_str", "abc123abc123abc123abc123abc123ab");
+        expectedBody.put("trade_order_id", "P1001");
+        expectedBody.put("hash", XunhuPaySigner.sign(expectedBody, "secret-001"));
+
+        Map<String, String> responseBody = new LinkedHashMap<>();
+        responseBody.put("errcode", "0");
+        responseBody.put("errmsg", "success");
+        responseBody.put("trade_order_id", "P1001");
+        responseBody.put("transaction_id", "TX1001");
+        responseBody.put("out_refund_no", "HPJRF1001");
+        responseBody.put("refund_fee", "12.30");
+        responseBody.put("refund_status", "CD");
+        responseBody.put("refund_time", "2026-05-18 12:00:00");
+        responseBody.put("time", "1700000001");
+        responseBody.put("nonce_str", "xyz");
+        responseBody.put("hash", XunhuPaySigner.sign(responseBody, "secret-001"));
+
+        server.expect(once(), requestTo("https://api.xunhupay.com/payment/refund.html"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentType("application/json;charset=UTF-8"))
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedBody), true))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
+
+        ChannelRefundResult result = adapter.refund("P1001", "HPJ1001", "RF1001", new BigDecimal("12.30"));
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.channelRefundNo()).isEqualTo("HPJRF1001");
+        server.verify();
+    }
+
+    @Test
+    void refundFailsWhenGatewayReturnsRefundingStatus() throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+        XunhuPayPaymentAdapter adapter = new XunhuPayPaymentAdapter(
+                properties(),
+                restTemplate,
+                Clock.fixed(Instant.ofEpochSecond(1_700_000_000L), ZoneOffset.UTC),
+                () -> "abc123abc123abc123abc123abc123ab"
+        );
+
+        Map<String, String> responseBody = new LinkedHashMap<>();
+        responseBody.put("errcode", "0");
+        responseBody.put("errmsg", "success");
+        responseBody.put("refund_status", "RD");
+        responseBody.put("time", "1700000001");
+        responseBody.put("nonce_str", "xyz");
+        responseBody.put("hash", XunhuPaySigner.sign(responseBody, "secret-001"));
+
+        server.expect(once(), requestTo("https://api.xunhupay.com/payment/refund.html"))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
+
+        ChannelRefundResult result = adapter.refund("P1001", null, "RF1001", new BigDecimal("12.30"));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.errorMessage()).contains("退款处理中");
+        server.verify();
+    }
+
+    @Test
+    void refundUsesOpenOrderIdWhenPaymentNoMissing() throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+        XunhuPayPaymentAdapter adapter = new XunhuPayPaymentAdapter(
+                properties(),
+                restTemplate,
+                Clock.fixed(Instant.ofEpochSecond(1_700_000_000L), ZoneOffset.UTC),
+                () -> "abc123abc123abc123abc123abc123ab"
+        );
+
+        Map<String, String> expectedBody = new LinkedHashMap<>();
+        expectedBody.put("appid", "app-001");
+        expectedBody.put("reason", "RechargeAi 退款 RF1002");
+        expectedBody.put("time", "1700000000");
+        expectedBody.put("nonce_str", "abc123abc123abc123abc123abc123ab");
+        expectedBody.put("open_order_id", "HPJ1001");
+        expectedBody.put("hash", XunhuPaySigner.sign(expectedBody, "secret-001"));
+
+        Map<String, String> responseBody = new LinkedHashMap<>();
+        responseBody.put("errcode", "0");
+        responseBody.put("errmsg", "success");
+        responseBody.put("refund_status", "CD");
+        responseBody.put("out_refund_no", "HPJRF1002");
+        responseBody.put("time", "1700000001");
+        responseBody.put("nonce_str", "xyz");
+        responseBody.put("hash", XunhuPaySigner.sign(responseBody, "secret-001"));
+
+        server.expect(once(), requestTo("https://api.xunhupay.com/payment/refund.html"))
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedBody), true))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
+
+        ChannelRefundResult result = adapter.refund(null, "HPJ1001", "RF1002", new BigDecimal("1.00"));
+
+        assertThat(result.success()).isTrue();
+        server.verify();
+    }
+
     private WildAiProperties properties() {
         WildAiProperties properties = new WildAiProperties();
         WildAiProperties.Payment.XunhuPay xunhuPay = properties.getPayment().getXunhupay();

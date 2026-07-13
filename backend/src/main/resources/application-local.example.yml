@@ -12,6 +12,7 @@ wildai:
     secret-key: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
   payment:
     mock-enabled: true
+    usd-to-cny-rate: ${WILDAI_USD_TO_CNY_RATE:7.250000}
     xunhupay:
       # 开启真实虎皮椒支付时改为 false，并通过环境变量或本地 application-local.yml 配置以下值
       appid: ${XUNHUPAY_APPID:}

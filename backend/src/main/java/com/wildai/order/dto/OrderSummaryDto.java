@@ -5,6 +5,7 @@ import java.time.Instant;
 
 public record OrderSummaryDto(
         String orderNo, String productName, BigDecimal amount, String currency,
+        BigDecimal paidAmount, String paidCurrency, BigDecimal exchangeRate,
         String orderStatus, String paymentStatus, String fulfillmentStatus,
         Instant createdAt, Instant paidAt
 ) {}

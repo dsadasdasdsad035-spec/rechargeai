@@ -2,6 +2,8 @@ package com.wildai.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.math.BigDecimal;
+
 @ConfigurationProperties(prefix = "wildai")
 public class WildAiProperties {
 
@@ -68,10 +70,13 @@ public class WildAiProperties {
 
     public static class Payment {
         private boolean mockEnabled = true;
+        private BigDecimal usdToCnyRate = new BigDecimal("7.250000");
         private XunhuPay xunhupay = new XunhuPay();
 
         public boolean isMockEnabled() { return mockEnabled; }
         public void setMockEnabled(boolean mockEnabled) { this.mockEnabled = mockEnabled; }
+        public BigDecimal getUsdToCnyRate() { return usdToCnyRate; }
+        public void setUsdToCnyRate(BigDecimal usdToCnyRate) { this.usdToCnyRate = usdToCnyRate; }
         public XunhuPay getXunhupay() { return xunhupay; }
         public void setXunhupay(XunhuPay xunhupay) { this.xunhupay = xunhupay; }
 

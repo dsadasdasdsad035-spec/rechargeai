@@ -24,6 +24,18 @@ public class PaymentTransaction {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Column(nullable = false, length = 16)
+    private String currency = "CNY";
+
+    @Column(name = "order_amount", precision = 12, scale = 2)
+    private BigDecimal orderAmount;
+
+    @Column(name = "order_currency", length = 16)
+    private String orderCurrency;
+
+    @Column(name = "exchange_rate", precision = 18, scale = 6)
+    private BigDecimal exchangeRate;
+
     @Column(nullable = false, length = 32)
     private String status;
 
@@ -53,6 +65,16 @@ public class PaymentTransaction {
     public String getAmount() { return amount != null ? amount.toPlainString() : null; }
     public BigDecimal getAmountDecimal() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
+    public String getOrderAmount() { return orderAmount != null ? orderAmount.toPlainString() : null; }
+    public BigDecimal getOrderAmountDecimal() { return orderAmount; }
+    public void setOrderAmount(BigDecimal orderAmount) { this.orderAmount = orderAmount; }
+    public String getOrderCurrency() { return orderCurrency; }
+    public void setOrderCurrency(String orderCurrency) { this.orderCurrency = orderCurrency; }
+    public String getExchangeRate() { return exchangeRate != null ? exchangeRate.toPlainString() : null; }
+    public BigDecimal getExchangeRateDecimal() { return exchangeRate; }
+    public void setExchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getThirdTradeNo() { return thirdTradeNo; }

@@ -129,21 +129,98 @@ public class XunhuPayPaymentAdapter implements PaymentChannelAdapter {
         return "OD".equals(params.get("status"));
     }
 
+    @Override
+    public ChannelRefundResult refund(String paymentNo, String thirdTradeNo, String refundNo, BigDecimal amount) {
+        WildAiProperties.Payment.XunhuPay config = config();
+        requireText(config.getAppid(), "虎皮椒 APPID 未配置");
+        requireText(config.getSecret(), "虎皮椒密钥未配置");
+
+        boolean hasPaymentNo = paymentNo != null && !paymentNo.isBlank();
+        boolean hasThirdTradeNo = thirdTradeNo != null && !thirdTradeNo.isBlank();
+        if (!hasPaymentNo && !hasThirdTradeNo) {
+            return ChannelRefundResult.fail("缺少商户支付单号或虎皮椒订单号");
+        }
+
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("appid", config.getAppid());
+        params.put("reason", "RechargeAi 退款 " + refundNo);
+        params.put("time", String.valueOf(clock.instant().getEpochSecond()));
+        params.put("nonce_str", nonceSupplier.get());
+        if (hasPaymentNo) {
+            params.put("trade_order_id", paymentNo);
+        } else {
+            params.put("open_order_id", thirdTradeNo);
+        }
+        params.put("hash", XunhuPaySigner.sign(params, config.getSecret()));
+
+        Map<String, Object> response;
+        try {
+            response = postJson(config, "/payment/refund.html", params);
+        } catch (BusinessException e) {
+            return ChannelRefundResult.fail(e.getMessage());
+        }
+
+        Object errcode = response.get("errcode");
+        if (!"0".equals(String.valueOf(errcode))) {
+            Object errmsg = response.get("errmsg");
+            return ChannelRefundResult.fail("虎皮椒退款失败：" + (errmsg != null ? errmsg : "未知错误"));
+        }
+
+        if (!verifyResponseHash(response, config.getSecret())) {
+            return ChannelRefundResult.fail("虎皮椒退款响应验签失败");
+        }
+
+        String refundStatus = stringValue(response.get("refund_status"));
+        return switch (refundStatus) {
+            case "CD" -> ChannelRefundResult.ok(resolveChannelRefundNo(response));
+            case "RD" -> ChannelRefundResult.fail("虎皮椒退款处理中，请稍后重试");
+            case "OD" -> ChannelRefundResult.fail("虎皮椒订单仍为已支付状态，退款未受理");
+            default -> ChannelRefundResult.fail("虎皮椒返回未知退款状态: " + refundStatus);
+        };
+    }
+
     @SuppressWarnings("unchecked")
-    private Map<String, Object> postCreatePayment(WildAiProperties.Payment.XunhuPay config, Map<String, String> params) {
+    private Map<String, Object> postJson(WildAiProperties.Payment.XunhuPay config, String path, Map<String, String> params) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("application/json;charset=UTF-8"));
-            Map<String, Object> response = restTemplate.postForObject(endpoint(config, "/payment/do.html"), new HttpEntity<>(params, headers), Map.class);
+            Map<String, Object> response = restTemplate.postForObject(
+                    endpoint(config, path), new HttpEntity<>(params, headers), Map.class);
             if (response == null) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "虎皮椒支付网关返回为空");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "虎皮椒网关返回为空");
             }
             return response;
         } catch (BusinessException e) {
             throw e;
         } catch (RestClientException e) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "虎皮椒支付网关请求失败");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "虎皮椒网关请求失败");
         }
+    }
+
+    private Map<String, Object> postCreatePayment(WildAiProperties.Payment.XunhuPay config, Map<String, String> params) {
+        return postJson(config, "/payment/do.html", params);
+    }
+
+    private boolean verifyResponseHash(Map<String, Object> response, String secret) {
+        Map<String, String> signed = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : response.entrySet()) {
+            if (entry.getValue() != null) {
+                signed.put(entry.getKey(), String.valueOf(entry.getValue()));
+            }
+        }
+        return XunhuPaySigner.verify(signed, secret);
+    }
+
+    private String resolveChannelRefundNo(Map<String, Object> response) {
+        String outRefundNo = stringValue(response.get("out_refund_no"));
+        if (!outRefundNo.isBlank()) {
+            return outRefundNo;
+        }
+        String transactionId = stringValue(response.get("transaction_id"));
+        if (!transactionId.isBlank()) {
+            return transactionId;
+        }
+        return stringValue(response.get("trade_order_id"));
     }
 
     private Map<?, ?> responseData(Map<String, Object> response) {

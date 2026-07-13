@@ -8,6 +8,7 @@ import java.util.List;
 
 public record AdminOrderDetailDto(
         String orderNo, Long productId, String productName, BigDecimal amount, String currency,
+        BigDecimal paidAmount, String paidCurrency, BigDecimal exchangeRate,
         String targetAccountMasked, String accountTokenMasked,
         String targetAccountPlain, String accountTokenPlain,
         String orderStatus, String paymentStatus, String fulfillmentStatus,

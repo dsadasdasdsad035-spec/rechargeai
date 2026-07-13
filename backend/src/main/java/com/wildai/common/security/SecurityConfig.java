@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tutorial-assets/**").permitAll()
                         .requestMatchers("/api/payments/*/notify").permitAll()
+                        .requestMatchers("/ws/support").permitAll()
                         .requestMatchers("/admin/api/auth/login").permitAll()
                         .requestMatchers("/admin/api/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/**").hasAuthority("ROLE_USER")

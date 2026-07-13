@@ -2,11 +2,13 @@
 import { onMounted, ref } from 'vue'
 import BaseCard from '../components/ui/BaseCard.vue'
 import http from '../services/http'
+import { formatMoney } from '../utils/money'
 
 interface Product {
   id: number
   name: string
   salePrice: number
+  currency: string
   periodDays: number
   estimatedHours?: number
 }
@@ -59,7 +61,7 @@ onMounted(async () => {
           <span v-if="p.estimatedHours" class="product-card__eta">约 {{ p.estimatedHours }}h</span>
         </div>
         <div class="product-card__price">
-          <span class="product-card__amount">¥{{ p.salePrice }}</span>
+          <span class="product-card__amount">{{ formatMoney(p.salePrice, p.currency) }}</span>
           <span class="product-card__period">/ {{ p.periodDays }} 天</span>
         </div>
         <span class="product-card__cta">查看详情 →</span>

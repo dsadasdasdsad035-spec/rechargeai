@@ -42,7 +42,8 @@ public class AdminOrderController {
             @RequestParam(defaultValue = "1") int pageNo,
             @RequestParam(defaultValue = "20") int pageSize) {
         return ApiResponse.ok(orderQueryService.listAdminOrders(
-                orderNo, userId, orderStatus, paymentStatus, startTime, endTime, pageNo, pageSize));
+                blankToNull(orderNo), userId, blankToNull(orderStatus), blankToNull(paymentStatus),
+                startTime, endTime, pageNo, pageSize));
     }
 
     @GetMapping("/{orderNo}")
@@ -52,16 +53,25 @@ public class AdminOrderController {
 
     @GetMapping("/export")
     public ResponseEntity<String> export(
+            @RequestParam(required = false) String orderNo,
+            @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String orderStatus,
-            @RequestParam(required = false) String paymentStatus) {
-        var orders = orderRepo.findAll().stream()
-                .filter(o -> orderStatus == null || orderStatus.equals(o.getOrderStatus()))
-                .filter(o -> paymentStatus == null || paymentStatus.equals(o.getPaymentStatus()))
-                .toList();
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endTime) {
+        var orders = orderRepo.searchAdminOrdersForExport(
+                blankToNull(orderNo), userId, blankToNull(orderStatus), blankToNull(paymentStatus), startTime, endTime);
         String csv = exportService.exportCsv(orders);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=orders.csv")
-                .contentType(MediaType.parseMediaType("text/csv"))
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
                 .body(csv);
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

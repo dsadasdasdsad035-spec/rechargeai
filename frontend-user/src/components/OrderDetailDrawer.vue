@@ -14,6 +14,7 @@ import {
   orderStatusTone,
   paymentStatusTone,
 } from '../utils/statusLabels'
+import { formatMoney } from '../utils/money'
 
 interface FulfillmentLog {
   logType: string
@@ -25,6 +26,10 @@ interface OrderDetail {
   orderNo: string
   productName: string
   amount: number
+  currency: string
+  paidAmount?: number | null
+  paidCurrency?: string | null
+  exchangeRate?: number | null
   targetAccountMasked: string
   accountTokenMasked?: string | null
   orderStatus: string
@@ -142,9 +147,13 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
             </div>
             <div class="detail-row">
               <span class="detail-label">金额</span>
-              <span class="detail-value detail-value--price">¥{{ detail.amount }}</span>
+              <span class="detail-value detail-value--price">{{ formatMoney(detail.amount, detail.currency) }}</span>
             </div>
-            <div class="detail-row">
+            <div v-if="detail.paidAmount != null" class="detail-row">
+              <span class="detail-label">实付金额</span>
+              <span class="detail-value detail-value--price">{{ formatMoney(detail.paidAmount, detail.paidCurrency) }}</span>
+            </div>
+            <div v-if="detail.targetAccountMasked" class="detail-row">
               <span class="detail-label">AI 账号</span>
               <span class="detail-value">{{ detail.targetAccountMasked }}</span>
             </div>
@@ -236,7 +245,8 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
               <RefundApplyForm
                 v-else
                 :order-no="detail.orderNo"
-                :amount="detail.amount"
+                :amount="detail.paidAmount ?? detail.amount"
+                :currency="detail.paidCurrency ?? detail.currency"
                 @submitted="onRefundSubmitted"
               />
             </section>

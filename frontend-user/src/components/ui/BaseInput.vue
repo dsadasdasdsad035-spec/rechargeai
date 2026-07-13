@@ -4,6 +4,7 @@ defineProps<{
   type?: string
   placeholder?: string
   modelValue?: string
+  required?: boolean
 }>()
 
 defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -16,6 +17,7 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
       class="field__input"
       :type="type ?? 'text'"
       :placeholder="placeholder"
+      :required="required"
       :value="modelValue"
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />

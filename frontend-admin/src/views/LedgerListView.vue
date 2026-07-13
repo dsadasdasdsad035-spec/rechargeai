@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { listLedger, type LedgerEntry } from '../services/financeApi'
+import { formatMoney, formatSignedMoney } from '../utils/money'
 
 const entries = ref<LedgerEntry[]>([])
 const loading = ref(true)
@@ -74,12 +75,12 @@ onMounted(load)
       <el-table-column label="金额" width="120" align="right">
         <template #default="{ row }">
           <span :class="row.amount >= 0 ? 'amount-plus' : 'amount-minus'">
-            {{ row.amount >= 0 ? '+' : '' }}{{ Number(row.amount).toFixed(2) }}
+            {{ formatSignedMoney(row.amount, 'CNY') }}
           </span>
         </template>
       </el-table-column>
       <el-table-column label="可用余额" width="120" align="right">
-        <template #default="{ row }">{{ Number(row.balanceAfter).toFixed(2) }}</template>
+        <template #default="{ row }">{{ formatMoney(row.balanceAfter, 'CNY') }}</template>
       </el-table-column>
       <el-table-column prop="refType" label="来源类型" width="100" />
       <el-table-column prop="refId" label="来源单号" min-width="160" show-overflow-tooltip />

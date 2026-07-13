@@ -10,6 +10,7 @@ import {
   type AdminRefundDetail,
 } from '../services/refundApi'
 import { REFUND_STATUS_LABEL, refundStatusType, canApproveRefund } from '../utils/statusLabels'
+import { formatMoney } from '../utils/money'
 
 const route = useRoute()
 const router = useRouter()
@@ -93,7 +94,7 @@ onMounted(load)
             {{ REFUND_STATUS_LABEL[detail.status] ?? detail.status }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="退款金额">¥{{ detail.amount }}</el-descriptions-item>
+        <el-descriptions-item label="退款金额">{{ formatMoney(detail.amount, detail.currency) }}</el-descriptions-item>
         <el-descriptions-item label="支付渠道">{{ detail.paymentChannel }}</el-descriptions-item>
         <el-descriptions-item label="用户 ID">{{ detail.userId }}</el-descriptions-item>
         <el-descriptions-item label="申请原因" :span="2">{{ detail.applyReason }}</el-descriptions-item>

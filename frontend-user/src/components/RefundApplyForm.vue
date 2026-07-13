@@ -2,10 +2,12 @@
 import { ref } from 'vue'
 import BaseButton from './ui/BaseButton.vue'
 import { applyRefund } from '../services/refundApi'
+import { formatMoney } from '../utils/money'
 
 const props = defineProps<{
   orderNo: string
   amount: number
+  currency?: string
 }>()
 
 const emit = defineEmits<{ submitted: [] }>()
@@ -37,7 +39,7 @@ async function submit() {
 <template>
   <div class="refund-form">
     <p class="refund-hint">
-      履约失败订单可申请<strong>全额退款</strong>（¥{{ amount }}），提交后进入人工审核。
+      履约失败订单可申请<strong>全额退款</strong>（{{ formatMoney(amount, currency) }}），提交后进入人工审核。
     </p>
     <label class="refund-label" for="refund-reason">退款原因</label>
     <textarea

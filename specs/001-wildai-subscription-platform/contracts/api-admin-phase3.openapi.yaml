@@ -41,7 +41,10 @@ components:
       type: object
       properties:
         settledRevenue: { type: number, format: decimal, description: SUCCESS 订单累计实收 }
-        totalRefunded: { type: number, format: decimal }
+        userRefunded:
+          type: number
+          format: decimal
+          description: 退款单 COMPLETED 累计，渠道原路退回用户
         availableBalance: { type: number, format: decimal }
         frozenForWithdrawal: { type: number, format: decimal }
         totalWithdrawn: { type: number, format: decimal }

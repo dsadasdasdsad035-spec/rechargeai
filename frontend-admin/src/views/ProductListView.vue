@@ -5,6 +5,7 @@ import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import http from '../services/http'
 import { PRODUCT_STATUS_LABEL, productStatusType } from '../utils/statusLabels'
+import { formatMoney } from '../utils/money'
 
 const products = ref<any[]>([])
 const loading = ref(true)
@@ -48,7 +49,7 @@ onMounted(load)
       <el-table-column prop="name" label="名称" min-width="160" />
       <el-table-column label="售价" width="120" align="right">
         <template #default="{ row }">
-          <span class="cell-price">¥{{ row.salePrice }}</span>
+          <span class="cell-price">{{ formatMoney(row.salePrice, row.currency) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="状态" width="100" align="center">

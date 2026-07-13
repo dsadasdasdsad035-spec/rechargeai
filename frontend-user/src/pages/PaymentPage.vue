@@ -3,10 +3,22 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import BaseCard from '../components/ui/BaseCard.vue'
 import http from '../services/http'
+import { formatMoney } from '../utils/money'
 
 const route = useRoute()
 const router = useRouter()
-const payInfo = ref<Record<string, string>>({})
+interface PayInfo {
+  paymentNo?: string
+  paymentUrl?: string
+  codeUrl?: string
+  amount?: string
+  currency?: string
+  orderAmount?: string
+  orderCurrency?: string
+  exchangeRate?: string
+}
+
+const payInfo = ref<PayInfo>({})
 const loading = ref(true)
 const error = ref('')
 const polling = ref(false)
@@ -71,6 +83,20 @@ onUnmounted(stopPolling)
     </BaseCard>
 
     <BaseCard v-else-if="!loading" class="pay-card">
+      <div v-if="payInfo.amount" class="pay-summary">
+        <div class="pay-summary__row">
+          <span>订单金额</span>
+          <strong>{{ formatMoney(payInfo.orderAmount ?? payInfo.amount, payInfo.orderCurrency ?? payInfo.currency) }}</strong>
+        </div>
+        <div class="pay-summary__row pay-summary__row--primary">
+          <span>应付人民币</span>
+          <strong>{{ formatMoney(payInfo.amount, payInfo.currency) }}</strong>
+        </div>
+        <p v-if="payInfo.exchangeRate" class="pay-summary__rate">
+          按当前汇率 1 {{ payInfo.orderCurrency }} = {{ payInfo.exchangeRate }} {{ payInfo.currency }} 折算
+        </p>
+      </div>
+
       <div v-if="payInfo.codeUrl && isImageQr()" class="pay-qr">
         <p class="pay-qr__label">请使用微信或支付宝扫码支付</p>
         <img class="pay-qr__image" :src="payInfo.codeUrl" alt="支付二维码" />
@@ -116,6 +142,42 @@ onUnmounted(stopPolling)
 .pay-card--error p {
   color: var(--color-danger);
   margin-bottom: var(--space-md);
+}
+
+.pay-summary {
+  display: grid;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-neutral-bg);
+}
+
+.pay-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+.pay-summary__row strong {
+  color: var(--color-text-heading);
+  font-size: 1rem;
+}
+
+.pay-summary__row--primary strong {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+}
+
+.pay-summary__rate {
+  margin-top: var(--space-xs);
+  font-size: 0.8125rem;
+  color: var(--color-text-subtle);
+  text-align: right;
 }
 
 .pay-qr {

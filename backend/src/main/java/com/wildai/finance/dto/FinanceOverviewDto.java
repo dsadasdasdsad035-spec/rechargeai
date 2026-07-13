@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 
 public record FinanceOverviewDto(
         BigDecimal settledRevenue,
-        BigDecimal totalRefunded,
+        /** 退款单 COMPLETED 累计，渠道原路退回用户 */
+        BigDecimal userRefunded,
         BigDecimal availableBalance,
         BigDecimal frozenForWithdrawal,
         BigDecimal totalWithdrawn

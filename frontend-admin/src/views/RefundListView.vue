@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { listRefunds, type AdminRefundSummary } from '../services/refundApi'
 import { REFUND_STATUS_LABEL, refundStatusType } from '../utils/statusLabels'
+import { formatMoney } from '../utils/money'
 
 const router = useRouter()
 const refunds = ref<AdminRefundSummary[]>([])
@@ -60,9 +61,9 @@ onMounted(load)
       <el-table-column prop="refundNo" label="退款单号" min-width="160" show-overflow-tooltip />
       <el-table-column prop="orderNo" label="订单号" min-width="160" show-overflow-tooltip />
       <el-table-column prop="userId" label="用户 ID" width="90" />
-      <el-table-column label="金额" width="100" align="right">
+      <el-table-column label="退款金额" width="120" align="right">
         <template #default="{ row }">
-          <span class="cell-price">¥{{ row.amount }}</span>
+          <span class="cell-price">{{ formatMoney(row.amount, row.currency) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="状态" width="110" align="center">

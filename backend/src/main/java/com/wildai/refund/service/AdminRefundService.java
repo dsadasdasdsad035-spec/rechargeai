@@ -13,7 +13,9 @@ import com.wildai.order.repository.SubscriptionOrderRepository;
 import com.wildai.payment.channel.ChannelRefundResult;
 import com.wildai.payment.channel.PaymentChannelAdapter;
 import com.wildai.payment.domain.PaymentTransaction;
+import com.wildai.payment.dto.PaymentAmountSnapshot;
 import com.wildai.payment.repository.PaymentTransactionRepository;
+import com.wildai.payment.service.PaymentAmountService;
 import com.wildai.product.repository.AiServiceProductRepository;
 import com.wildai.refund.domain.RefundRequest;
 import com.wildai.refund.dto.AdminRefundDetailDto;
@@ -41,6 +43,7 @@ public class AdminRefundService {
     private final RefundRequestRepository refundRepo;
     private final SubscriptionOrderRepository orderRepo;
     private final PaymentTransactionRepository paymentRepo;
+    private final PaymentAmountService paymentAmountService;
     private final AiServiceProductRepository productRepo;
     private final AdminUserRepository adminUserRepo;
     private final RbacService rbacService;
@@ -52,6 +55,7 @@ public class AdminRefundService {
     public AdminRefundService(RefundRequestRepository refundRepo,
                               SubscriptionOrderRepository orderRepo,
                               PaymentTransactionRepository paymentRepo,
+                              PaymentAmountService paymentAmountService,
                               AiServiceProductRepository productRepo,
                               AdminUserRepository adminUserRepo,
                               RbacService rbacService,
@@ -62,6 +66,7 @@ public class AdminRefundService {
         this.refundRepo = refundRepo;
         this.orderRepo = orderRepo;
         this.paymentRepo = paymentRepo;
+        this.paymentAmountService = paymentAmountService;
         this.productRepo = productRepo;
         this.adminUserRepo = adminUserRepo;
         this.rbacService = rbacService;
@@ -195,7 +200,7 @@ public class AdminRefundService {
                     payment.getPaymentNo(),
                     payment.getThirdTradeNo(),
                     refund.getRefundNo(),
-                    refund.getAmount());
+                    payment.getAmountDecimal());
             if (last.success()) {
                 return last;
             }
@@ -297,11 +302,13 @@ public class AdminRefundService {
 
     private AdminRefundSummaryDto toSummary(RefundRequest refund) {
         SubscriptionOrder order = requireOrder(refund.getOrderId());
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         return new AdminRefundSummaryDto(
                 refund.getRefundNo(),
                 order.getOrderNo(),
                 refund.getUserId(),
                 refund.getAmount(),
+                amount.settlementCurrency(),
                 refund.getStatus(),
                 refund.getApplyReason(),
                 refund.getCreatedAt()
@@ -312,6 +319,7 @@ public class AdminRefundService {
         SubscriptionOrder order = requireOrder(refund.getOrderId());
         String productName = productRepo.findById(order.getProductId()).map(p -> p.getName()).orElse("-");
         String channel = paymentRepo.findByOrderId(order.getId()).map(PaymentTransaction::getChannel).orElse("-");
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         return new AdminRefundDetailDto(
                 refund.getRefundNo(),
                 order.getOrderNo(),
@@ -319,6 +327,7 @@ public class AdminRefundService {
                 productName,
                 channel,
                 refund.getAmount(),
+                amount.settlementCurrency(),
                 refund.getStatus(),
                 refund.getApplyReason(),
                 refund.getReviewComment(),

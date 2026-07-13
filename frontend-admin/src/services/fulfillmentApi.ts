@@ -24,6 +24,9 @@ export interface FulfillmentTaskDetail extends FulfillmentTaskSummary {
   userId: number
   amount: number
   currency: string
+  paidAmount: number | null
+  paidCurrency: string | null
+  exchangeRate: number | null
   orderStatus: string
   paymentStatus: string
   fulfillmentStatus: string

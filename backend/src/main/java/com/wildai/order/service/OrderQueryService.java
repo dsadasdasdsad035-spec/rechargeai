@@ -15,7 +15,9 @@ import com.wildai.order.dto.OrderDetailDto;
 import com.wildai.order.dto.OrderSummaryDto;
 import com.wildai.order.repository.SubscriptionOrderRepository;
 import com.wildai.payment.domain.PaymentTransaction;
+import com.wildai.payment.dto.PaymentAmountSnapshot;
 import com.wildai.payment.repository.PaymentTransactionRepository;
+import com.wildai.payment.service.PaymentAmountService;
 import com.wildai.product.repository.AiServiceProductRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -32,19 +34,22 @@ public class OrderQueryService {
     private final SubscriptionOrderRepository orderRepo;
     private final AiServiceProductRepository productRepo;
     private final PaymentTransactionRepository paymentRepo;
+    private final PaymentAmountService paymentAmountService;
     private final AesEncryptUtil aesEncryptUtil;
     private final FulfillmentTaskRepository fulfillmentTaskRepo;
     private final FulfillmentLogRepository fulfillmentLogRepo;
     private final RefundRequestRepository refundRequestRepo;
 
     public OrderQueryService(SubscriptionOrderRepository orderRepo, AiServiceProductRepository productRepo,
-                             PaymentTransactionRepository paymentRepo, AesEncryptUtil aesEncryptUtil,
+                             PaymentTransactionRepository paymentRepo, PaymentAmountService paymentAmountService,
+                             AesEncryptUtil aesEncryptUtil,
                              FulfillmentTaskRepository fulfillmentTaskRepo,
                              FulfillmentLogRepository fulfillmentLogRepo,
                              RefundRequestRepository refundRequestRepo) {
         this.orderRepo = orderRepo;
         this.productRepo = productRepo;
         this.paymentRepo = paymentRepo;
+        this.paymentAmountService = paymentAmountService;
         this.aesEncryptUtil = aesEncryptUtil;
         this.fulfillmentTaskRepo = fulfillmentTaskRepo;
         this.fulfillmentLogRepo = fulfillmentLogRepo;
@@ -84,15 +89,19 @@ public class OrderQueryService {
     }
 
     private OrderSummaryDto toSummary(SubscriptionOrder o, String productName) {
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(o);
         return new OrderSummaryDto(o.getOrderNo(), productName, o.getAmount(), o.getCurrency(),
+                amount.paidAmount(), amount.paidCurrency(), amount.exchangeRate(),
                 o.getOrderStatus(), o.getPaymentStatus(), o.getFulfillmentStatus(),
                 o.getCreatedAt(), o.getPaidAt());
     }
 
     private OrderDetailDto toDetail(SubscriptionOrder order) {
         var ctx = buildDetailContext(order);
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         return new OrderDetailDto(order.getOrderNo(), order.getProductId(), ctx.productName(),
-                order.getAmount(), order.getCurrency(), ctx.accountMasked(), ctx.tokenMasked(),
+                order.getAmount(), order.getCurrency(), amount.paidAmount(), amount.paidCurrency(), amount.exchangeRate(),
+                ctx.accountMasked(), ctx.tokenMasked(),
                 order.getOrderStatus(), order.getPaymentStatus(), order.getFulfillmentStatus(),
                 ctx.tradeMasked(), order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt(),
                 ctx.taskNo(), ctx.taskStatus(), ctx.subStart(), ctx.subEnd(), ctx.logs(),
@@ -101,8 +110,10 @@ public class OrderQueryService {
 
     private AdminOrderDetailDto toAdminDetail(SubscriptionOrder order) {
         var ctx = buildDetailContext(order);
+        PaymentAmountSnapshot amount = paymentAmountService.resolve(order);
         return new AdminOrderDetailDto(order.getOrderNo(), order.getProductId(), ctx.productName(),
-                order.getAmount(), order.getCurrency(), ctx.accountMasked(), ctx.tokenMasked(),
+                order.getAmount(), order.getCurrency(), amount.paidAmount(), amount.paidCurrency(), amount.exchangeRate(),
+                ctx.accountMasked(), ctx.tokenMasked(),
                 ctx.accountPlain(), ctx.tokenPlain(),
                 order.getOrderStatus(), order.getPaymentStatus(), order.getFulfillmentStatus(),
                 ctx.tradeMasked(), order.getCreatedAt(), order.getPaidAt(), order.getExpiredAt(),
@@ -112,8 +123,9 @@ public class OrderQueryService {
 
     private DetailContext buildDetailContext(SubscriptionOrder order) {
         String productName = productRepo.findById(order.getProductId()).map(p -> p.getName()).orElse("-");
-        String accountPlain = aesEncryptUtil.decrypt(order.getTargetAccountEnc());
-        String accountMasked = DesensitizeUtil.account(accountPlain);
+        String accountPlain = order.getTargetAccountEnc() != null
+                ? aesEncryptUtil.decrypt(order.getTargetAccountEnc()) : null;
+        String accountMasked = accountPlain != null ? DesensitizeUtil.account(accountPlain) : null;
         String tokenPlain = order.getAccountTokenEnc() != null
                 ? aesEncryptUtil.decrypt(order.getAccountTokenEnc()) : null;
         String tokenMasked = DesensitizeUtil.token(tokenPlain);

@@ -11,11 +11,13 @@ import {
   orderStatusTone,
   paymentStatusTone,
 } from '../utils/statusLabels'
+import { formatMoney } from '../utils/money'
 
 interface OrderItem {
   orderNo: string
   productName: string
   amount: number
+  currency: string
   orderStatus: string
   paymentStatus: string
   targetAccountMasked?: string
@@ -26,6 +28,7 @@ const selected = ref<{
   orderNo: string
   productName: string
   amount: number
+  currency: string
   targetAccountMasked: string
   orderStatus: string
   paymentStatus: string
@@ -104,7 +107,7 @@ onMounted(load)
         <button type="button" class="order-item" @click="showDetail(o.orderNo)">
           <div class="order-item__main">
             <span class="order-item__name">{{ o.productName }}</span>
-            <span class="order-item__amount">¥{{ o.amount }}</span>
+            <span class="order-item__amount">{{ formatMoney(o.amount, o.currency) }}</span>
           </div>
           <div class="order-item__meta">
             <span class="order-item__no">{{ o.orderNo }}</span>

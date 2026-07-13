@@ -55,6 +55,23 @@ public interface SubscriptionOrderRepository extends JpaRepository<SubscriptionO
                                               @Param("end") Instant end,
                                               Pageable pageable);
 
+    @Query("""
+            SELECT o FROM SubscriptionOrder o WHERE
+            (:orderNo IS NULL OR o.orderNo = :orderNo)
+            AND (:userId IS NULL OR o.userId = :userId)
+            AND (:orderStatus IS NULL OR o.orderStatus = :orderStatus)
+            AND (:paymentStatus IS NULL OR o.paymentStatus = :paymentStatus)
+            AND (:start IS NULL OR o.createdAt >= :start)
+            AND (:end IS NULL OR o.createdAt <= :end)
+            ORDER BY o.createdAt DESC
+            """)
+    List<SubscriptionOrder> searchAdminOrdersForExport(@Param("orderNo") String orderNo,
+                                                       @Param("userId") Long userId,
+                                                       @Param("orderStatus") String orderStatus,
+                                                       @Param("paymentStatus") String paymentStatus,
+                                                       @Param("start") Instant start,
+                                                       @Param("end") Instant end);
+
     List<SubscriptionOrder> findByOrderStatusAndExpiredAtBefore(String orderStatus, Instant before);
 
     @Query("SELECT COALESCE(SUM(o.amount), 0) FROM SubscriptionOrder o WHERE o.orderStatus = :orderStatus")

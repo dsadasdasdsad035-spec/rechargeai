@@ -7,6 +7,7 @@ import BaseCard from '../components/ui/BaseCard.vue'
 import MarkdownContent from '../components/MarkdownContent.vue'
 import http from '../services/http'
 import { getApiErrorMessage } from '../utils/apiError'
+import { formatMoney } from '../utils/money'
 
 interface OrderField {
   key: string
@@ -79,7 +80,7 @@ async function submit() {
     <template v-if="product">
       <header class="page-header">
         <h2>确认订购</h2>
-        <p>{{ product.name }} · ¥{{ product.salePrice }}</p>
+        <p>{{ product.name }} · {{ formatMoney(product.salePrice, product.currency) }}</p>
       </header>
 
       <BaseCard v-if="guide && (guide.accountTutorial || guide.tokenTutorial)" class="guide-card">
@@ -100,9 +101,10 @@ async function submit() {
             v-for="field in orderFields"
             :key="field.key"
             v-model="fieldValues[field.key]"
-            :label="field.label"
-            :type="field.type === 'password' ? 'password' : field.type === 'email' ? 'email' : 'text'"
-            :placeholder="field.placeholder ?? `请填写${field.label}`"
+            :label="field.required === false ? `${field.label}（选填）` : field.label"
+            :type="field.type === 'email' ? 'email' : 'text'"
+            :required="field.required !== false"
+            :placeholder="field.placeholder ?? (field.required === false ? `选填：${field.label}` : `请填写${field.label}`)"
           />
           <p class="hint" role="note">请勿填写第三方服务登录密码；Session Token 将加密保存</p>
           <p v-if="submitError" class="submit-error" role="alert">{{ submitError }}</p>

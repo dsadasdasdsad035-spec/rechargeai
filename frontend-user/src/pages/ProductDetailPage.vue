@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseCard from '../components/ui/BaseCard.vue'
 import http from '../services/http'
+import { formatMoney } from '../utils/money'
 
 const route = useRoute()
 const product = ref<any>(null)
@@ -23,7 +24,10 @@ onMounted(async () => {
     <template v-else-if="product">
       <header class="page-header">
         <h2>{{ product.name }}</h2>
-        <p class="price">¥{{ product.salePrice }}<span class="price__unit">/ {{ product.periodDays }} 天</span></p>
+        <p class="price">
+          {{ formatMoney(product.salePrice, product.currency) }}
+          <span class="price__unit">/ {{ product.periodDays }} 天</span>
+        </p>
       </header>
 
       <BaseCard class="info-card">

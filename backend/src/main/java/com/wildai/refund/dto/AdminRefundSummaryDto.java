@@ -8,6 +8,7 @@ public record AdminRefundSummaryDto(
         String orderNo,
         Long userId,
         BigDecimal amount,
+        String currency,
         String status,
         String applyReason,
         Instant createdAt

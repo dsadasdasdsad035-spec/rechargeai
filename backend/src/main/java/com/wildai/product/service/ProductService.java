@@ -19,8 +19,8 @@ import java.util.UUID;
 public class ProductService {
 
     private static final String DEFAULT_REQUIRED_FIELDS_JSON =
-            "[{\"key\":\"target_account\",\"label\":\"AI 账号\",\"type\":\"text\",\"required\":true},"
-                    + "{\"key\":\"account_token\",\"label\":\"Session Token\",\"type\":\"password\",\"required\":true}]";
+            "[{\"key\":\"target_account\",\"label\":\"AI 账号\",\"type\":\"text\",\"required\":false},"
+                    + "{\"key\":\"account_token\",\"label\":\"Session Token\",\"type\":\"text\",\"required\":true}]";
 
     private final AiServiceProductRepository productRepo;
     private final ObjectMapper objectMapper;
@@ -63,7 +63,7 @@ public class ProductService {
                 if (required && (val == null || val.isBlank())) {
                     throw new BusinessException(ErrorCode.BAD_REQUEST, "请填写" + node.path("label").asText());
                 }
-                if ("password".equalsIgnoreCase(key)) {
+                if ("password".equalsIgnoreCase(node.path("type").asText())) {
                     throw new BusinessException(ErrorCode.BAD_REQUEST, "不允许提交第三方登录密码");
                 }
             }

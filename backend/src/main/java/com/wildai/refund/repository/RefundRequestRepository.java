@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,4 +33,7 @@ public interface RefundRequestRepository extends JpaRepository<RefundRequest, Lo
                                            @Param("orderNo") String orderNo,
                                            @Param("refundNo") String refundNo,
                                            Pageable pageable);
+
+    @Query("SELECT COALESCE(SUM(r.amount), 0) FROM RefundRequest r WHERE r.status = 'COMPLETED'")
+    BigDecimal sumCompletedAmount();
 }

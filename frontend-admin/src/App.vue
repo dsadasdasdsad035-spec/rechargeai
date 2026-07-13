@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, Goods, User, SwitchButton, List, Money, Key, Notebook, Wallet } from '@element-plus/icons-vue'
+import { ChatDotRound, Document, Goods, User, SwitchButton, List, Money, Key, Notebook, Wallet, Setting } from '@element-plus/icons-vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 const route = useRoute()
@@ -11,10 +11,12 @@ const activeMenu = computed(() => {
   if (route.path.startsWith('/products')) return '/products'
   if (route.path.startsWith('/service-types')) return '/service-types'
   if (route.path.startsWith('/fulfillment')) return '/fulfillment'
+  if (route.path.startsWith('/support')) return '/support'
   if (route.path.startsWith('/refunds')) return '/refunds'
   if (route.path.startsWith('/roles')) return '/roles'
   if (route.path.startsWith('/audit-logs')) return '/audit-logs'
   if (route.path.startsWith('/finance')) return '/finance'
+  if (route.path.startsWith('/settings')) return '/settings'
   return route.path
 })
 
@@ -51,6 +53,10 @@ function logout() {
             <el-icon><List /></el-icon>
             <span>履约任务</span>
           </el-menu-item>
+          <el-menu-item index="/support">
+            <el-icon><ChatDotRound /></el-icon>
+            <span>在线客服</span>
+          </el-menu-item>
           <el-menu-item index="/refunds">
             <el-icon><Money /></el-icon>
             <span>退款管理</span>
@@ -64,15 +70,16 @@ function logout() {
             <el-menu-item index="/finance/ledger">账本流水</el-menu-item>
             <el-menu-item index="/finance/withdrawals">提现管理</el-menu-item>
             <el-menu-item index="/finance/payout-accounts">收款账户</el-menu-item>
+            <el-menu-item index="/finance/settings">支付设置</el-menu-item>
           </el-sub-menu>
-          <el-menu-item index="/products">
-            <el-icon><Goods /></el-icon>
-            <span>产品管理</span>
-          </el-menu-item>
-          <el-menu-item index="/service-types">
-            <el-icon><Notebook /></el-icon>
-            <span>服务类型教程</span>
-          </el-menu-item>
+          <el-sub-menu index="/products">
+            <template #title>
+              <el-icon><Goods /></el-icon>
+              <span>产品管理</span>
+            </template>
+            <el-menu-item index="/products">产品列表</el-menu-item>
+            <el-menu-item index="/service-types">服务类型教程</el-menu-item>
+          </el-sub-menu>
           <el-menu-item index="/users">
             <el-icon><User /></el-icon>
             <span>用户管理</span>
@@ -84,6 +91,10 @@ function logout() {
           <el-menu-item index="/audit-logs">
             <el-icon><Notebook /></el-icon>
             <span>审计日志</span>
+          </el-menu-item>
+          <el-menu-item index="/settings">
+            <el-icon><Setting /></el-icon>
+            <span>系统配置</span>
           </el-menu-item>
         </el-menu>
 

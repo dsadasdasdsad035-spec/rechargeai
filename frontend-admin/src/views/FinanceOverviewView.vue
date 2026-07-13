@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { getFinanceOverview, type FinanceOverview } from '../services/financeApi'
 
-const router = useRouter()
 const loading = ref(true)
 const overview = ref<FinanceOverview | null>(null)
 
@@ -30,11 +28,8 @@ onMounted(load)
     <header class="admin-page__header">
       <div class="admin-page__header-text">
         <h2>资金概览</h2>
-        <p>已结算实收仅含履约成功（SUCCESS）订单，与运营统计口径一致</p>
+        <p>已结算实收仅含履约成功（SUCCESS）订单；用户退款为渠道原路退回累计</p>
       </div>
-      <el-button type="primary" @click="router.push('/finance/ledger')">账本流水</el-button>
-      <el-button @click="router.push('/finance/withdrawals')">提现管理</el-button>
-      <el-button @click="router.push('/finance/payout-accounts')">收款账户</el-button>
     </header>
 
     <el-row v-loading="loading" :gutter="16" class="stat-row">
@@ -52,8 +47,9 @@ onMounted(load)
       </el-col>
       <el-col :xs="24" :sm="12" :lg="8">
         <el-card shadow="never" class="stat-card">
-          <div class="stat-card__label">累计已退款</div>
-          <div class="stat-card__value">{{ fmt(overview?.totalRefunded) }}</div>
+          <div class="stat-card__label">累计用户退款</div>
+          <div class="stat-card__value">{{ fmt(overview?.userRefunded) }}</div>
+          <div class="stat-card__hint">已完成退款单累计，支付渠道原路退回用户</div>
         </el-card>
       </el-col>
       <el-col :xs="24" :sm="12" :lg="8">
@@ -97,5 +93,12 @@ onMounted(load)
   font-size: 28px;
   font-weight: 600;
   color: var(--el-text-color-primary);
+}
+
+.stat-card__hint {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--el-text-color-placeholder);
 }
 </style>

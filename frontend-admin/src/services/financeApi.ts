@@ -2,7 +2,8 @@ import http from './http'
 
 export interface FinanceOverview {
   settledRevenue: number
-  totalRefunded: number
+  /** 退款单 COMPLETED，原路退回用户 */
+  userRefunded: number
   availableBalance: number
   frozenForWithdrawal: number
   totalWithdrawn: number
