@@ -1,0 +1,20 @@
+CREATE TABLE content_article (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    slug VARCHAR(180) NOT NULL,
+    summary VARCHAR(500) NULL,
+    cover_image_url VARCHAR(512) NULL,
+    content_markdown LONGTEXT NOT NULL,
+    content_html LONGTEXT NOT NULL,
+    seo_title VARCHAR(200) NULL,
+    seo_description VARCHAR(320) NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'DRAFT',
+    published_at DATETIME(6) NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_content_article_slug (slug),
+    KEY idx_content_article_status_published (status, published_at),
+    KEY idx_content_article_updated_at (updated_at),
+    CONSTRAINT chk_content_article_status CHECK (status IN ('DRAFT', 'PUBLISHED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
