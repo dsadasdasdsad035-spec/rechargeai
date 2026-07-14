@@ -129,16 +129,19 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
         assertThat(logoMark.text()).isEqualTo("R");
         assertThat(logoText).isNotNull();
         assertThat(logoText.text()).isEqualTo("RechargeAi");
+        assertThat(document.select("h1")).hasSize(1);
+        assertThat(document.select(".article-body h2").eachText()).contains("SEO 指南");
     }
 
     private void assertPublishedArticleListStructure(String html) {
         Document document = Jsoup.parse(html);
-        Element articleCard = document.selectFirst("article.article-card");
+        Element articleLink = document.selectFirst(
+                "a.card-link[href='/articles/seo-guide']");
 
+        assertThat(articleLink).isNotNull();
+        Element articleCard = articleLink.closest("article.article-card");
         assertThat(articleCard).isNotNull();
-        assertThat(articleCard.selectFirst(
-                "h2 > a.card-link[href='/articles/seo-guide']"))
-                .isNotNull();
+        assertThat(articleLink.parent().tagName()).isEqualTo("h2");
         Element summary = articleCard.selectFirst("p.article-card__summary");
         assertThat(summary).isNotNull();
         assertThat(summary.text()).isEqualTo("适用于主流浏览器的 SEO 指南");

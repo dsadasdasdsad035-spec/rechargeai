@@ -236,6 +236,11 @@ git commit -m "fix(ui): 恢复 SSR 产品页品牌视觉"
 - 修改：`backend/src/main/resources/templates/public/article-detail.html`
 - 修改：`backend/src/main/resources/templates/public/error.html`（仅增加统一类名，不改变错误语义）
 - 修改：`backend/src/main/resources/static/seo/site.css`
+- 修改：`backend/src/main/java/com/wildai/content/service/ArticleMarkdownService.java`
+- 修改：`backend/src/test/java/com/wildai/content/service/ArticleMarkdownServiceTest.java`
+- 修改：`backend/src/test/java/com/wildai/seo/PublicStyleContractTest.java`
+- 修改：`backend/src/test/java/com/wildai/smoke/PublicContentPageSmokeIT.java`
+- 修改：`backend/src/test/java/com/wildai/smoke/ArticleAdminSmokeIT.java`
 - 修改：`frontend-user/e2e/seo-articles.spec.ts`
 - 修改：`frontend-user/playwright.config.ts`
 
@@ -247,6 +252,8 @@ git commit -m "fix(ui): 恢复 SSR 产品页品牌视觉"
 - 封面图与卡片图保持 16:9、8px 圆角；
 - 代码块、图片与表格保持安全溢出；
 - 错误卡片复用表面、边框、圆角和按钮，不修改 404/500 状态与 noindex。
+- Markdown 正文在安全清洗后将 `h1` 至 `h5` 各降一级，`h6` 保持不变，确保页面级文章标题是详情页唯一的 `h1`；
+- `.article-body h1` 保留受控字号与间距，兼容数据库中尚未重新渲染的历史正文，且视觉层级低于页面标题。
 
 - [ ] **步骤 2：增加 Playwright 视觉契约断言**
 

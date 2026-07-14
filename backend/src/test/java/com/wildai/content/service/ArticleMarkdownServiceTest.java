@@ -20,10 +20,35 @@ class ArticleMarkdownServiceTest {
                 [官网](https://rechargeai.cn)
                 """, "");
 
-        assertThat(content.html()).contains("<table>", "<h1>标题</h1>")
+        assertThat(content.html()).contains("<table>", "<h2>标题</h2>")
                 .doesNotContain("script", "javascript:")
                 .contains("rel=\"noopener noreferrer\"");
         assertThat(content.summary()).startsWith("标题 名称 价格");
+    }
+
+    @Test
+    void shiftsBodyHeadingLevelsWithoutCreatingPageHeadings() {
+        var content = service.render("""
+                # 一级标题
+                ## 二级标题
+                ### 三级标题
+                #### 四级标题
+                ##### 五级标题
+                ###### 六级标题
+                """, "");
+
+        assertThat(content.html())
+                .contains(
+                        "<h2>一级标题</h2>",
+                        "<h3>二级标题</h3>",
+                        "<h4>三级标题</h4>",
+                        "<h5>四级标题</h5>",
+                        "<h6>五级标题</h6>",
+                        "<h6>六级标题</h6>")
+                .doesNotContain("<h1>");
+        assertThat(content.plainText())
+                .isEqualTo("一级标题 二级标题 三级标题 四级标题 五级标题 六级标题");
+        assertThat(content.summary()).isEqualTo(content.plainText());
     }
 
     @Test

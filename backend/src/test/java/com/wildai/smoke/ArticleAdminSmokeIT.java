@@ -97,7 +97,7 @@ class ArticleAdminSmokeIT extends BaseSmokeIT {
                 .andExpect(jsonPath("$.data.title").value("SEO 指南更新"))
                 .andExpect(jsonPath("$.data.slug").value(slug))
                 .andExpect(jsonPath("$.data.contentMarkdown").value("# SEO 指南更新\n新正文"))
-                .andExpect(jsonPath("$.data.contentHtml").value(containsString("<h1>SEO 指南更新</h1>")))
+                .andExpect(jsonPath("$.data.contentHtml").value(containsString("<h2>SEO 指南更新</h2>")))
                 .andExpect(jsonPath("$.data.contentHtml").value(containsString("<p>新正文</p>")));
 
         mockMvc.perform(post("/admin/api/articles/preview")
@@ -106,7 +106,7 @@ class ArticleAdminSmokeIT extends BaseSmokeIT {
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "contentMarkdown", "# 预览<script>alert(1)</script>"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.html").value(containsString("<h1>预览</h1>")))
+                .andExpect(jsonPath("$.data.html").value(containsString("<h2>预览</h2>")))
                 .andExpect(jsonPath("$.data.html").value(not(containsString("<script>"))));
 
         mockMvc.perform(post("/admin/api/articles/" + articleId + "/publish")

@@ -628,8 +628,12 @@ img {
 .article-body blockquote,
 .article-body pre,
 .article-body table,
+.article-body h1,
 .article-body h2,
-.article-body h3 {
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
   margin-block: var(--space-lg);
 }
 
@@ -642,12 +646,22 @@ img {
   margin-top: var(--space-xs);
 }
 
+.article-body h1,
 .article-body h2 {
   font-size: 1.375rem;
 }
 
 .article-body h3 {
   font-size: 1.125rem;
+}
+
+.article-body h4 {
+  font-size: 1rem;
+}
+
+.article-body h5,
+.article-body h6 {
+  font-size: 0.9375rem;
 }
 
 .article-body blockquote {

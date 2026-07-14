@@ -60,6 +60,16 @@ class PublicStyleContractTest {
                         + "[^}]*margin-bottom:\\s*0[^}]*}")
                 .containsPattern("(?s)\\.article-body\\s+p\\s*\\{"
                         + "[^}]*margin-block:\\s*var\\(--space-md\\)[^}]*}")
+                .containsPattern("(?s)\\.article-body\\s+h1,"
+                        + "\\s*\\.article-body\\s+h2,"
+                        + "\\s*\\.article-body\\s+h3,"
+                        + "\\s*\\.article-body\\s+h4,"
+                        + "\\s*\\.article-body\\s+h5,"
+                        + "\\s*\\.article-body\\s+h6\\s*\\{"
+                        + "[^}]*margin-block:\\s*var\\(--space-lg\\)[^}]*}")
+                .containsPattern("(?s)\\.article-body\\s+h1,"
+                        + "\\s*\\.article-body\\s+h2\\s*\\{"
+                        + "[^}]*font-size:\\s*1\\.375rem[^}]*}")
                 .containsPattern("(?s)\\.error-card\\s+\\.button\\s*\\{"
                         + "[^}]*margin-top:\\s*var\\(--space-lg\\)[^}]*}");
     }

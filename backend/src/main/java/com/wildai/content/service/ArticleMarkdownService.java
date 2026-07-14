@@ -41,6 +41,7 @@ public class ArticleMarkdownService {
                 new Document.OutputSettings().prettyPrint(false));
 
         Document document = Jsoup.parseBodyFragment(safeHtml);
+        shiftBodyHeadingLevels(document);
         document.select("a[href]").attr("rel", "noopener noreferrer");
         String html = document.body().html();
         String plainText = normalizeWhitespace(document.text());
@@ -53,6 +54,13 @@ public class ArticleMarkdownService {
 
     public String preview(String markdown) {
         return render(markdown, "").html();
+    }
+
+    private void shiftBodyHeadingLevels(Document document) {
+        document.select("h1, h2, h3, h4, h5").forEach(heading -> {
+            int currentLevel = heading.tagName().charAt(1) - '0';
+            heading.tagName("h" + (currentLevel + 1));
+        });
     }
 
     private String normalizeWhitespace(String value) {
