@@ -7,6 +7,7 @@ import com.wildai.common.exception.ErrorCode;
 import com.wildai.product.domain.AiServiceProduct;
 import com.wildai.product.dto.ProductDetailDto;
 import com.wildai.product.repository.AiServiceProductRepository;
+import com.wildai.seo.service.SitemapVersion;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,12 +28,15 @@ public class ProductService {
     private final AiServiceProductRepository productRepo;
     private final ObjectMapper objectMapper;
     private final ServiceTypeConfigService serviceTypeConfigService;
+    private final SitemapVersion sitemapVersion;
 
     public ProductService(AiServiceProductRepository productRepo, ObjectMapper objectMapper,
-                          ServiceTypeConfigService serviceTypeConfigService) {
+                          ServiceTypeConfigService serviceTypeConfigService,
+                          SitemapVersion sitemapVersion) {
         this.productRepo = productRepo;
         this.objectMapper = objectMapper;
         this.serviceTypeConfigService = serviceTypeConfigService;
+        this.sitemapVersion = sitemapVersion;
     }
 
     public List<ProductDetailDto> listOnShelf() {
@@ -108,14 +112,18 @@ public class ProductService {
         Instant now = Instant.now();
         product.setCreatedAt(now);
         product.setUpdatedAt(now);
-        return productRepo.save(product);
+        AiServiceProduct saved = productRepo.save(product);
+        sitemapVersion.invalidate();
+        return saved;
     }
 
     @Transactional
     public AiServiceProduct save(AiServiceProduct product) {
         normalizeAndValidateOffer(product);
         product.setUpdatedAt(Instant.now());
-        return productRepo.save(product);
+        AiServiceProduct saved = productRepo.save(product);
+        sitemapVersion.invalidate();
+        return saved;
     }
 
     private void normalizeAndValidateOffer(AiServiceProduct product) {

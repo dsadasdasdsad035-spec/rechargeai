@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wildai.common.exception.BusinessException;
 import com.wildai.product.domain.AiServiceProduct;
 import com.wildai.product.repository.AiServiceProductRepository;
+import com.wildai.seo.service.SitemapVersion;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -21,10 +22,12 @@ class ProductServiceTest {
 
     private final AiServiceProductRepository productRepo = mock(AiServiceProductRepository.class);
     private final ServiceTypeConfigService serviceTypeConfigService = mock(ServiceTypeConfigService.class);
+    private final SitemapVersion sitemapVersion = mock(SitemapVersion.class);
     private final ProductService productService = new ProductService(
             productRepo,
             new ObjectMapper(),
-            serviceTypeConfigService);
+            serviceTypeConfigService,
+            sitemapVersion);
 
     @Test
     void createRejectsNonPositiveSalePrice() {
@@ -122,6 +125,7 @@ class ProductServiceTest {
         assertThat(productService.create(cnyProduct).getCurrency()).isEqualTo("CNY");
         assertThat(productService.save(usdProduct).getCurrency()).isEqualTo("USD");
         verify(productRepo, times(2)).save(any(AiServiceProduct.class));
+        verify(sitemapVersion, times(2)).invalidate();
     }
 
     private AiServiceProduct product(String salePrice, String currency, String status) {
