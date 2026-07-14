@@ -40,6 +40,7 @@ services:
       # 发布时仅替换 JAR 并重启容器，避免每次 podman build 耗时过长
       - ./wildai-backend-0.1.0-SNAPSHOT.jar:/app/app.jar:ro,Z
       - ./uploads/tutorial:/app/uploads/tutorial:Z
+      - ./uploads/article:/app/uploads/article:Z
     depends_on:
       mysql:
         condition: service_healthy
@@ -68,6 +69,9 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-RechargeAi <noreply@rechargeai.cn>}
       WILDAI_TUTORIAL_UPLOAD_DIR: /app/uploads/tutorial
+      WILDAI_ARTICLE_UPLOAD_DIR: /app/uploads/article
+      WILDAI_ARTICLE_MAX_IMAGE_BYTES: ${WILDAI_ARTICLE_MAX_IMAGE_BYTES:-5242880}
+      WILDAI_SEO_BASE_URL: ${WILDAI_SEO_BASE_URL:-https://rechargeai.cn}
     expose:
       - "8080"
 

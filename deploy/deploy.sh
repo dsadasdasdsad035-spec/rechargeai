@@ -21,7 +21,8 @@ echo "==> 构建前端..."
 (cd "$ROOT/frontend-admin" && npm run build)
 
 echo "==> 组装部署包..."
-mkdir -p "$DEPLOY/html/user" "$DEPLOY/html/admin" "$DEPLOY/uploads/tutorial"
+mkdir -p "$DEPLOY/html/user" "$DEPLOY/html/admin" \
+  "$DEPLOY/uploads/tutorial" "$DEPLOY/uploads/article"
 cp "$ROOT/backend/target/wildai-backend-0.1.0-SNAPSHOT.jar" "$DEPLOY/"
 cp -r "$ROOT/frontend-user/dist/." "$DEPLOY/html/user/"
 cp -r "$ROOT/frontend-admin/dist/." "$DEPLOY/html/admin/"
@@ -53,6 +54,8 @@ XUNHUPAY_NOTIFY_URL=https://rechargeai.cn/api/payments/xunhupay/notify
 XUNHUPAY_RETURN_URL=https://rechargeai.cn/transaction-record
 XUNHUPAY_CALLBACK_URL=https://rechargeai.cn/transaction-record
 XUNHUPAY_TIMEOUT_SECONDS=10
+WILDAI_SEO_BASE_URL=https://rechargeai.cn
+WILDAI_ARTICLE_MAX_IMAGE_BYTES=5242880
 EOF
 fi
 
