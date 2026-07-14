@@ -223,9 +223,19 @@ public class SeoMetadataFactory {
     }
 
     private String pageTitle(String value) {
-        String title = requireText(value, "页面标题不能为空");
+        if (isBlank(value)) {
+            throw new IllegalArgumentException("页面标题不能为空");
+        }
         String suffix = " | " + siteName;
-        return title.endsWith(suffix) ? title : title + suffix;
+        String title = value.stripTrailing();
+        while (title.endsWith(suffix)) {
+            title = title.substring(0, title.length() - suffix.length()).stripTrailing();
+        }
+        title = title.strip();
+        if (title.isEmpty()) {
+            throw new IllegalArgumentException("页面标题移除站点后缀后不能为空");
+        }
+        return title + suffix;
     }
 
     private String productDescription(ProductDetailDto product) {

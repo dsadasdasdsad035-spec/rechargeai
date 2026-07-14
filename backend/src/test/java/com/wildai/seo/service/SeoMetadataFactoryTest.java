@@ -104,6 +104,38 @@ class SeoMetadataFactoryTest {
     }
 
     @Test
+    void collapsesRepeatedSiteSuffixesToExactlyOne() {
+        for (String seoTitle : List.of(
+                "人工标题 | RechargeAi | RechargeAi",
+                "人工标题 | RechargeAi | RechargeAi | RechargeAi")) {
+            var article = article(
+                    "普通标题",
+                    "safe-slug",
+                    "摘要",
+                    null,
+                    seoTitle,
+                    "描述");
+
+            assertThat(factory().forArticle(article).title()).isEqualTo("人工标题 | RechargeAi");
+        }
+    }
+
+    @Test
+    void rejectsTitleMadeOnlyOfSiteSuffixes() {
+        var article = article(
+                "普通标题",
+                "safe-slug",
+                "摘要",
+                null,
+                " | RechargeAi | RechargeAi",
+                "描述");
+
+        assertThatThrownBy(() -> factory().forArticle(article))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("页面标题移除站点后缀后不能为空");
+    }
+
+    @Test
     void resolvesRelativeArticleImageAndKeepsAbsoluteHttpsImage() throws Exception {
         var relative = factory().forArticle(article(
                 "标题", "relative-image", "摘要", "/api/article-assets/a.png", null, null));
