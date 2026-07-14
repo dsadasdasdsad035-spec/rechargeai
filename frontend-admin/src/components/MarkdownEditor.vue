@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { renderMarkdown } from '../utils/markdown'
 import { uploadTutorialAsset } from '../services/tutorialAssetApi'
 
 const content = defineModel<string>({ default: '' })
 
-defineProps<{
+const props = withDefaults(defineProps<{
   label: string
   placeholder?: string
   rows?: number
-}>()
+  allowVideo?: boolean
+  uploadImage?: (file: File) => Promise<string>
+  previewMarkdown?: (source: string) => Promise<string>
+  testId?: string
+}>(), { allowVideo: true })
 
 const activeTab = ref<'edit' | 'preview'>('edit')
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
@@ -18,8 +22,58 @@ const imageInputRef = ref<HTMLInputElement | null>(null)
 const videoInputRef = ref<HTMLInputElement | null>(null)
 const uploadingImage = ref(false)
 const uploadingVideo = ref(false)
+const serverPreviewHtml = ref('')
+const previewLoading = ref(false)
+const previewError = ref('')
+let previewTimer: number | undefined
+let previewSequence = 0
 
-const previewHtml = computed(() => renderMarkdown(content.value))
+const previewHtml = computed(() => props.previewMarkdown
+  ? serverPreviewHtml.value
+  : renderMarkdown(content.value))
+
+function scheduleServerPreview(delay = 300) {
+  if (!props.previewMarkdown) return
+  window.clearTimeout(previewTimer)
+  const sequence = ++previewSequence
+  previewTimer = window.setTimeout(() => refreshServerPreview(sequence), delay)
+}
+
+async function refreshServerPreview(sequence: number) {
+  if (!props.previewMarkdown || sequence !== previewSequence) return
+  if (!content.value.trim()) {
+    serverPreviewHtml.value = ''
+    previewError.value = ''
+    previewLoading.value = false
+    return
+  }
+  previewLoading.value = true
+  previewError.value = ''
+  try {
+    const html = await props.previewMarkdown(content.value)
+    if (sequence !== previewSequence) return
+    serverPreviewHtml.value = html
+  } catch {
+    if (sequence !== previewSequence) return
+    serverPreviewHtml.value = ''
+    previewError.value = '预览失败，请稍后重试'
+  } finally {
+    if (sequence === previewSequence) previewLoading.value = false
+  }
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'preview') scheduleServerPreview(0)
+})
+
+watch(content, () => {
+  if (activeTab.value === 'preview') scheduleServerPreview()
+})
+
+onBeforeUnmount(() => {
+  window.clearTimeout(previewTimer)
+  previewSequence += 1
+})
 
 function insertText(snippet: string) {
   const el = textareaRef.value
@@ -51,12 +105,21 @@ async function uploadFile(file: File, kind: 'image' | 'video') {
   const loading = kind === 'image' ? uploadingImage : uploadingVideo
   loading.value = true
   try {
+    if (kind === 'image' && props.uploadImage) {
+      const url = await props.uploadImage(file)
+      const alt = file.name.replace(/\.[^.]+$/, '')
+      insertText(`\n![${alt}](${url})\n`)
+      ElMessage.success('图片已上传并插入')
+      return
+    }
+
     const { data } = await uploadTutorialAsset(file)
-    const url = data.data.url
     if (data.data.kind === 'video' || kind === 'video') {
+      const url = data.data.url
       insertText(`\n<video src="${url}" controls playsinline preload="metadata"></video>\n`)
       ElMessage.success('视频已上传并插入')
     } else {
+      const url = data.data.url
       const alt = file.name.replace(/\.[^.]+$/, '')
       insertText(`\n![${alt}](${url})\n`)
       ElMessage.success('图片已上传并插入')
@@ -99,7 +162,7 @@ async function onVideoChange(e: Event) {
       <span class="md-editor__label">{{ label }}</span>
       <div class="md-editor__actions">
         <el-button size="small" :loading="uploadingImage" @click="triggerImageUpload">上传图片</el-button>
-        <el-button size="small" :loading="uploadingVideo" @click="triggerVideoUpload">上传视频</el-button>
+        <el-button v-if="allowVideo" size="small" :loading="uploadingVideo" @click="triggerVideoUpload">上传视频</el-button>
         <input
           ref="imageInputRef"
           type="file"
@@ -108,6 +171,7 @@ async function onVideoChange(e: Event) {
           @change="onImageChange"
         />
         <input
+          v-if="allowVideo"
           ref="videoInputRef"
           type="file"
           accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
@@ -121,14 +185,18 @@ async function onVideoChange(e: Event) {
         <textarea
           ref="textareaRef"
           v-model="content"
+          :data-testid="testId"
           class="md-textarea"
           :rows="rows ?? 8"
           :placeholder="placeholder ?? '支持 Markdown、图片与视频（上传后自动插入）'"
         />
       </el-tab-pane>
       <el-tab-pane label="预览" name="preview">
-        <div v-if="previewHtml" class="md-preview" v-html="previewHtml" />
-        <p v-else class="md-preview md-preview--empty">暂无内容</p>
+        <div v-loading="previewLoading" class="md-preview">
+          <p v-if="previewError" class="md-preview__error">{{ previewError }}</p>
+          <div v-else-if="previewHtml" v-html="previewHtml" />
+          <p v-else class="md-preview--empty">暂无内容</p>
+        </div>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -169,6 +237,11 @@ async function onVideoChange(e: Event) {
 
 .md-preview--empty {
   color: var(--el-text-color-secondary);
+}
+
+.md-preview__error {
+  margin: 0;
+  color: var(--el-color-danger);
 }
 
 .md-preview :deep(h1),

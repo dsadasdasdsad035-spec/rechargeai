@@ -58,3 +58,16 @@ export const withdrawArticle = (id: number) =>
 
 export const deleteArticle = (id: number) =>
   http.delete(`/articles/${id}`)
+
+export const previewArticle = (contentMarkdown: string) =>
+  http.post<{ data: { html: string } }>('/articles/preview', { contentMarkdown })
+
+export async function uploadArticleImage(file: File): Promise<string> {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await http.post<{ data: { url: string } }>('/article-assets', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60_000,
+  })
+  return data.data.url
+}
