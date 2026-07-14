@@ -7,25 +7,27 @@
 <header th:replace="~{public/fragments :: siteHeader}"></header>
 <main class="page">
   <header class="page-heading">
-    <p class="eyebrow">RechargeAi 服务</p>
-    <h1>AI 订阅产品</h1>
-    <p>选择适合你的 AI 订阅服务，查看公开价格与服务周期。</p>
+    <h1>AI 订阅服务</h1>
+    <p>选择您需要的 AI 服务，我们将协助完成订阅流程</p>
   </header>
-  <section class="grid" aria-label="产品列表" th:if="${!products.isEmpty()}">
-    <article class="card product-card" th:each="product : ${products}">
-      <p class="meta" th:text="${product.serviceType}">服务类型</p>
-      <h2>
-        <a class="card-link" th:href="@{/products/{id}(id=${product.id})}"
-           th:text="${product.name}">产品名称</a>
-      </h2>
-      <p class="price">
-        <span th:text="${product.salePrice}">0.00</span>
-        <span th:text="${product.currency}">CNY</span>
-      </p>
-      <p th:if="${product.periodDays != null}">
-        服务周期：<span th:text="${product.periodDays}">30</span> 天
-      </p>
-    </article>
+  <section class="product-grid" aria-label="产品列表" th:if="${!products.isEmpty()}">
+    <a class="card product-card" th:each="product : ${products}"
+       th:href="@{/products/{id}(id=${product.id})}">
+      <span class="product-card__top">
+        <span class="product-card__name" th:text="${product.name}">产品名称</span>
+        <span class="product-card__eta" th:if="${product.estimatedHours != null}"
+              th:text="|约 ${product.estimatedHours}h|">约 1h</span>
+      </span>
+      <span class="product-card__price">
+        <span class="product-card__amount">
+          <span th:text="${product.salePrice}">0.00</span>
+          <span th:text="${product.currency}">CNY</span>
+        </span>
+        <span class="product-card__period" th:if="${product.periodDays != null}"
+              th:text="|/ ${product.periodDays} 天|">/ 30 天</span>
+      </span>
+      <span class="product-card__cta">查看详情 →</span>
+    </a>
   </section>
   <p class="empty-state" th:if="${products.isEmpty()}">当前没有可订阅的产品，请稍后再来。</p>
 </main>

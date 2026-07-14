@@ -1,11 +1,16 @@
 package com.wildai.smoke;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -17,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PublicContentPageSmokeIT extends BaseSmokeIT {
 
     @Test
-    void publishedArticleIsRenderedInFirstHtmlAndPrivateArticlesStayHidden() throws Exception {
+    void publishedArticleUsesBrandStructureAndPrivateArticlesStayHidden() throws Exception {
         String adminToken = adminLogin();
         long articleId = createDraftArticle(adminToken, "SEO 指南", "seo-guide", "# SEO 指南\n公开正文");
 
@@ -27,7 +32,7 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/articles/seo-guide"))
+        var articleDetail = mockMvc.perform(get("/articles/seo-guide"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(containsString("<h1>SEO 指南</h1>")))
@@ -35,7 +40,11 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
                 .andExpect(content().string(containsString(
                         "<link rel=\"canonical\" href=\"https://rechargeai.cn/articles/seo-guide\"")))
                 .andExpect(content().string(containsString("application/ld+json")))
-                .andExpect(content().string(not(containsString("id=\"app\""))));
+                .andExpect(content().string(not(containsString("id=\"app\""))))
+                .andReturn();
+
+        assertPublishedArticleBrandStructure(articleDetail.getResponse()
+                .getContentAsString(StandardCharsets.UTF_8));
 
         mockMvc.perform(get("/articles"))
                 .andExpect(status().isOk())
@@ -51,7 +60,7 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
     }
 
     @Test
-    void onlyOnShelfProductsAreRenderedAndRootRedirectsPermanently() throws Exception {
+    void onlyOnShelfProductsUseVisualStructureAndRootRedirectsPermanently() throws Exception {
         String adminToken = adminLogin();
         long onShelfId = createAndShelfProduct(adminToken, "主流浏览器套餐", DEFAULT_SALE_PRICE);
         long offShelfId = createAndShelfProduct(adminToken, "下架保密套餐", DEFAULT_SALE_PRICE);
@@ -62,17 +71,26 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
                         .content("{\"status\":\"OFF_SHELF\"}"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/products"))
+        var productList = mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(containsString("主流浏览器套餐")))
-                .andExpect(content().string(not(containsString("下架保密套餐"))));
+                .andExpect(content().string(not(containsString("下架保密套餐"))))
+                .andReturn();
 
-        mockMvc.perform(get("/products/" + onShelfId))
+        assertProductListVisualStructure(productList.getResponse()
+                .getContentAsString(StandardCharsets.UTF_8));
+
+        var productDetail = mockMvc.perform(get("/products/" + onShelfId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(containsString("主流浏览器套餐")))
-                .andExpect(content().string(containsString("href=\"/checkout/" + onShelfId + "\"")));
+                .andExpect(content().string(containsString("href=\"/checkout/" + onShelfId + "\"")))
+                .andReturn();
+
+        assertProductDetailVisualStructure(
+                productDetail.getResponse().getContentAsString(StandardCharsets.UTF_8),
+                onShelfId);
 
         assertProductNotFound(offShelfId, "下架保密套餐");
         assertProductNotFound(Long.MAX_VALUE, "下架保密套餐");
@@ -80,6 +98,43 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
         mockMvc.perform(get("/"))
                 .andExpect(status().isMovedPermanently())
                 .andExpect(header().string("Location", "/products"));
+    }
+
+    private void assertPublishedArticleBrandStructure(String html) {
+        Document document = Jsoup.parse(html);
+        Element logoMark = document.selectFirst("header .logo .logo__mark");
+        Element logoText = document.selectFirst("header .logo .logo__text");
+
+        assertThat(logoMark).isNotNull();
+        assertThat(logoMark.text()).isEqualTo("R");
+        assertThat(logoText).isNotNull();
+        assertThat(logoText.text()).isEqualTo("RechargeAi");
+    }
+
+    private void assertProductListVisualStructure(String html) {
+        Document document = Jsoup.parse(html);
+        Element logoMark = document.selectFirst("header .logo .logo__mark");
+        Element heading = document.selectFirst(".page-heading h1");
+        Element firstProductCard = document.select(".product-card").first();
+
+        assertThat(logoMark).isNotNull();
+        assertThat(logoMark.text()).isEqualTo("R");
+        assertThat(heading).isNotNull();
+        assertThat(heading.text()).isEqualTo("AI 订阅服务");
+        assertThat(firstProductCard).isNotNull();
+
+        Element callToAction = firstProductCard.selectFirst(".product-card__cta");
+        assertThat(callToAction).isNotNull();
+        assertThat(callToAction.text()).isEqualTo("查看详情 →");
+    }
+
+    private void assertProductDetailVisualStructure(String html, long productId) {
+        Document document = Jsoup.parse(html);
+
+        assertThat(document.selectFirst("dl.info-list")).isNotNull();
+        assertThat(document.selectFirst(
+                "a.button.button--block[href='/checkout/" + productId + "']"))
+                .isNotNull();
     }
 
     private long createDraftArticle(

@@ -43,8 +43,7 @@ class PublicStyleContractTest {
                 .contains("--font-serif: Georgia")
                 .contains(".logo__mark")
                 .contains(".product-card__cta")
-                .contains(".info-list")
-                .doesNotContain("3.75rem");
+                .contains(".info-list");
     }
 
     @Test
@@ -54,7 +53,9 @@ class PublicStyleContractTest {
 
         assertThat(css)
                 .contains("--page-title-size: clamp(1.375rem, 1.2rem + 0.5vw, 1.625rem)")
-                .contains("--article-title-size: clamp(1.75rem, 1.55rem + 1vw, 2.25rem)");
+                .contains("--article-title-size: clamp(1.75rem, 1.55rem + 1vw, 2.25rem)")
+                .containsPattern("(?s)\\.page-heading h1\\s*\\{[^}]*font-size:\\s*var\\(--page-title-size\\)")
+                .containsPattern("(?s)\\.article-heading h1\\s*\\{[^}]*font-size:\\s*var\\(--article-title-size\\)");
     }
 }
 ```
@@ -92,7 +93,7 @@ cd backend
 mvn -Dtest=PublicStyleContractTest,PublicContentPageSmokeIT test
 ```
 
-预期：FAIL；CSS 测试缺少 `--font-serif`/`.logo__mark`，HTML 测试缺少 Logo 标记、原产品标题和产品详情结构。失败不能来自编译错误或测试环境错误。
+预期：FAIL；CSS 测试缺少 `--font-serif`/`.logo__mark` 和标题变量绑定，HTML 测试缺少 Logo 标记、原产品标题和产品详情结构。失败不能来自编译错误或测试环境错误。
 
 ---
 

@@ -6,27 +6,35 @@
 <body>
 <header th:replace="~{public/fragments :: siteHeader}"></header>
 <main class="page">
-  <article class="article product-detail">
-    <header class="article-heading">
-      <a class="back-link" href="/products">返回产品列表</a>
+  <article class="product-detail">
+    <a class="back-link" href="/products">返回产品列表</a>
+    <header class="page-header">
       <p class="eyebrow" th:text="${product.serviceType}">服务类型</p>
       <h1 th:text="${product.name}">产品名称</h1>
-    </header>
-    <section class="product-panel" aria-label="产品信息">
-      <p class="price">
+      <p class="product-detail__price">
         <span th:text="${product.salePrice}">0.00</span>
         <span th:text="${product.currency}">CNY</span>
+        <span class="price__unit" th:if="${product.periodDays != null}"
+              th:text="|/ ${product.periodDays} 天|">/ 30 天</span>
       </p>
-      <p th:if="${product.periodDays != null}">
-        服务周期：<span th:text="${product.periodDays}">30</span> 天
-      </p>
-      <p th:if="${product.estimatedHours != null}">
-        预计处理：<span th:text="${product.estimatedHours}">1</span> 小时
-      </p>
-      <p th:if="${product.complianceNotice != null}" th:text="${product.complianceNotice}">合规说明</p>
-      <p th:if="${product.refundPolicyText != null}" th:text="${product.refundPolicyText}">退款说明</p>
-      <a class="button" th:href="@{/checkout/{id}(id=${product.id})}">立即购买</a>
+    </header>
+    <section class="card info-card" aria-label="产品信息">
+      <dl class="info-list">
+        <div class="info-row" th:if="${product.estimatedHours != null}">
+          <dt>预计处理</dt>
+          <dd th:text="|约 ${product.estimatedHours} 小时|">约 1 小时</dd>
+        </div>
+        <div class="info-row" th:if="${product.refundPolicyText != null}">
+          <dt>退款政策</dt>
+          <dd th:text="${product.refundPolicyText}">退款说明</dd>
+        </div>
+      </dl>
     </section>
+    <div class="notice" role="note" th:if="${product.complianceNotice != null}"
+         th:text="${product.complianceNotice}">合规说明</div>
+    <div class="actions">
+      <a class="button button--block" th:href="@{/checkout/{id}(id=${product.id})}">立即订购</a>
+    </div>
   </article>
 </main>
 </body>

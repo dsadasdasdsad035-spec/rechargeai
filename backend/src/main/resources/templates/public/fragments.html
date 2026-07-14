@@ -22,12 +22,27 @@
 <header class="site-header" th:fragment="siteHeader">
   <div class="site-inner">
     <nav class="site-nav" aria-label="主导航">
-      <a class="brand" href="/products">RechargeAi</a>
+      <a class="logo" href="/products" aria-label="RechargeAi 首页">
+        <span class="logo__mark" aria-hidden="true">R</span>
+        <span class="logo__text">RechargeAi</span>
+      </a>
       <div class="nav-links">
-        <a href="/products">订阅产品</a>
-        <a href="/articles">文章中心</a>
-        <a href="/account">我的账户</a>
+        <a class="nav__link" href="/products">服务</a>
+        <a class="nav__link" href="/articles">文章</a>
+        <a class="nav__link" href="/transaction-record">交易记录</a>
+        <a class="nav__link" href="/login">登录</a>
       </div>
+      <details class="mobile-nav">
+        <summary class="menu-toggle" aria-label="打开菜单">
+          <span class="menu-toggle__bar" aria-hidden="true"></span>
+        </summary>
+        <div class="mobile-nav__panel">
+          <a class="nav__link" href="/products">服务</a>
+          <a class="nav__link" href="/articles">文章</a>
+          <a class="nav__link" href="/transaction-record">交易记录</a>
+          <a class="nav__link" href="/login">登录</a>
+        </div>
+      </details>
     </nav>
   </div>
 </header>
