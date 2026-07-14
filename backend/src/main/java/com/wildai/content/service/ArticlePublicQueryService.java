@@ -19,9 +19,11 @@ import java.util.Optional;
 public class ArticlePublicQueryService {
 
     private final ArticleRepository repository;
+    private final ArticleMarkdownService markdownService;
 
-    public ArticlePublicQueryService(ArticleRepository repository) {
+    public ArticlePublicQueryService(ArticleRepository repository, ArticleMarkdownService markdownService) {
         this.repository = repository;
+        this.markdownService = markdownService;
     }
 
     @Transactional(readOnly = true)
@@ -55,7 +57,7 @@ public class ArticlePublicQueryService {
                 article.getSlug(),
                 article.getSummary(),
                 article.getCoverImageUrl(),
-                article.getContentHtml(),
+                markdownService.normalizeCachedHtml(article.getContentHtml()),
                 article.getSeoTitle(),
                 article.getSeoDescription(),
                 article.getPublishedAt(),

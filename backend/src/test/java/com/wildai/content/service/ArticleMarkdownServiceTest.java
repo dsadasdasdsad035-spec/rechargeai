@@ -52,6 +52,22 @@ class ArticleMarkdownServiceTest {
     }
 
     @Test
+    void normalizesLegacyCachedHeadingsOnlyOnce() {
+        String legacyHtml = "<h1>旧标题</h1><h2>子标题</h2><h6>末级</h6>";
+
+        String normalized = service.normalizeCachedHtml(legacyHtml);
+
+        assertThat(normalized)
+                .contains("<h2>旧标题</h2>", "<h3>子标题</h3>", "<h6>末级</h6>")
+                .doesNotContain("<h1>");
+        assertThat(service.normalizeCachedHtml(normalized)).isEqualTo(normalized);
+        assertThat(service.normalizeCachedHtml("<h2>已规范标题</h2>"))
+                .isEqualTo("<h2>已规范标题</h2>");
+        assertThat(service.normalizeCachedHtml(null)).isNull();
+        assertThat(service.normalizeCachedHtml("  ")).isEqualTo("  ");
+    }
+
+    @Test
     void keepsManualSummaryWithinDatabaseLimit() {
         String summary = " 摘要 ".repeat(200);
 

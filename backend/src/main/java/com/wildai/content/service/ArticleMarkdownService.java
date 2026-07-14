@@ -56,6 +56,19 @@ public class ArticleMarkdownService {
         return render(markdown, "").html();
     }
 
+    public String normalizeCachedHtml(String safeHtml) {
+        if (safeHtml == null || safeHtml.isBlank()) {
+            return safeHtml;
+        }
+
+        Document document = Jsoup.parseBodyFragment(safeHtml);
+        if (document.body().selectFirst("h1") == null) {
+            return safeHtml;
+        }
+        shiftBodyHeadingLevels(document);
+        return document.body().html();
+    }
+
     private void shiftBodyHeadingLevels(Document document) {
         document.select("h1, h2, h3, h4, h5").forEach(heading -> {
             int currentLevel = heading.tagName().charAt(1) - '0';

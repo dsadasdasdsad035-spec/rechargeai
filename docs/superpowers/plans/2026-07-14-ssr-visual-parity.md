@@ -8,6 +8,8 @@
 
 **技术栈：** Java 21、Spring Boot 3.3、Thymeleaf、JUnit 5、MockMvc、AssertJ、CSS、Playwright
 
+**兼容策略：** 旧 Safari 通过 `@supports (color: oklch(0 0 0))` 分层使用现代色彩变量，基础 `:root` 始终保留 hex/rgb 降级值；历史文章缓存只在读取到 `<h1>` 时执行一次标题降级，已规范正文保持原样。
+
 ---
 
 ### 任务 1：建立 SSR 品牌结构与 CSS 回归契约

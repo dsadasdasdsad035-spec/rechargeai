@@ -45,9 +45,11 @@ class ArticleManagementServiceTest {
     private final AuditLogService auditLogService = mock(AuditLogService.class);
     private final SitemapVersion sitemapVersion = mock(SitemapVersion.class);
     private final RbacService rbacService = mock(RbacService.class);
+    private final ArticleMarkdownService markdownService = new ArticleMarkdownService();
     private final ArticleManagementService service = new ArticleManagementService(
-            repository, new ArticleMarkdownService(), auditLogService, sitemapVersion, rbacService);
-    private final ArticlePublicQueryService publicQueryService = new ArticlePublicQueryService(repository);
+            repository, markdownService, auditLogService, sitemapVersion, rbacService);
+    private final ArticlePublicQueryService publicQueryService = new ArticlePublicQueryService(
+            repository, markdownService);
 
     @Test
     void publishSetsFirstPublishedAtAndInvalidatesSitemap() {
@@ -378,6 +380,7 @@ class ArticleManagementServiceTest {
     @Test
     void publicQueriesUsePublishedRepositoryMethods() {
         Article article = article(7L, "seo-guide", ArticleStatus.PUBLISHED, Instant.now());
+        article.setContentHtml("<h1>旧标题</h1><h2>子标题</h2>");
         ArticleListProjection projection = projection(article);
         when(repository.findByStatusOrderByPublishedAtDesc(eq(ArticleStatus.PUBLISHED), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(projection), PageRequest.of(0, 10), 1));
@@ -390,7 +393,12 @@ class ArticleManagementServiceTest {
         assertThat(page.items()).hasSize(1);
         ArticlePublicSummaryDto summary = page.items().getFirst();
         assertThat(summary.slug()).isEqualTo("seo-guide");
-        assertThat(detail).isPresent().get().extracting("slug").isEqualTo("seo-guide");
+        assertThat(detail).isPresent().get().satisfies(publicArticle -> {
+            assertThat(publicArticle.slug()).isEqualTo("seo-guide");
+            assertThat(publicArticle.contentHtml())
+                    .contains("<h2>旧标题</h2>", "<h3>子标题</h3>")
+                    .doesNotContain("<h1>");
+        });
         verify(repository).findByStatusOrderByPublishedAtDesc(eq(ArticleStatus.PUBLISHED), any(Pageable.class));
         verify(repository).findBySlugAndStatus("seo-guide", ArticleStatus.PUBLISHED);
         verify(repository, never()).findById(any());
