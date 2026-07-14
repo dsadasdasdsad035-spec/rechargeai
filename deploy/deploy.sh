@@ -57,8 +57,11 @@ wait_for_public_health() {
   local attempt
   local response
   local health_url="${DEPLOY_DOMAIN%/}/actuator/health"
+  local health_host="${DEPLOY_DOMAIN#*://}"
+  health_host="${health_host%%/*}"
+  health_host="${health_host%%:*}"
   for ((attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++)); do
-    response="$(curl -fsS --max-time 10 "$health_url" 2>/dev/null || true)"
+    response="$(remote_exec "curl -fsS --max-time 10 --resolve '$health_host:443:127.0.0.1' '$health_url'" 2>/dev/null || true)"
     if grep -qE '"status"[[:space:]]*:[[:space:]]*"UP"' <<<"$response"; then
       echo "==> 公网健康检查通过"
       return 0

@@ -64,6 +64,13 @@ grep -qE '^wait_for_backend_health\(\)[[:space:]]*\{' "$DEPLOY_SCRIPT" \
   || fail "缺少 wait_for_backend_health 函数"
 grep -qE '^wait_for_public_health\(\)[[:space:]]*\{' "$DEPLOY_SCRIPT" \
   || fail "缺少 wait_for_public_health 函数"
+grep -qE '^[[:space:]]*local health_url=.*actuator/health' "$DEPLOY_SCRIPT" \
+  || fail "公网健康等待未定义 actuator 健康地址"
+grep -qE '^[[:space:]]*response=.*remote_exec "curl .*--resolve .*127\.0\.0\.1.*\$health_url' "$DEPLOY_SCRIPT" \
+  || fail "公网健康检查必须通过 SSH 在远端回环地址执行"
+if grep -qE '^[[:space:]]*response="\$\(curl .*\$health_url' "$DEPLOY_SCRIPT"; then
+  fail "不得从部署机直接请求受限的生产 actuator 端点"
+fi
 grep -qE '^verify_container_state\(\)[[:space:]]*\{' "$DEPLOY_SCRIPT" \
   || fail "缺少 verify_container_state 函数"
 grep -qE '^[[:space:]]*health_status=.*remote_exec ".*docker inspect -f .*State\.Health\.Status.*wildai-backend' "$DEPLOY_SCRIPT" \
