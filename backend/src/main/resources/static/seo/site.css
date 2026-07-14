@@ -550,7 +550,7 @@ img {
   width: 100%;
 }
 
-/* 文章与错误页现有结构 */
+/* 文章与错误页 */
 .card-image,
 .article-cover {
   display: block;
@@ -563,14 +563,47 @@ img {
   aspect-ratio: 16 / 9;
 }
 
+.article-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.article-card h2 {
+  margin: 0;
+}
+
+.article-card .card-link {
+  width: fit-content;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.article-card__summary {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
 .article {
   max-width: 760px;
   margin-inline: auto;
 }
 
-.lead {
+.article-heading .lead {
+  margin-top: var(--space-md);
   max-width: 65ch;
+  color: var(--color-text-muted);
   font-size: 1.125rem;
+}
+
+.article-heading .meta {
+  margin-top: var(--space-sm);
+}
+
+.article-heading .article-cover {
+  margin-top: var(--space-lg);
 }
 
 .article-body {
@@ -578,10 +611,60 @@ img {
   line-height: 1.8;
 }
 
+.article-body > :first-child {
+  margin-top: 0;
+}
+
+.article-body > :last-child {
+  margin-bottom: 0;
+}
+
+.article-body p {
+  margin-block: var(--space-md);
+}
+
+.article-body ul,
+.article-body ol,
+.article-body blockquote,
+.article-body pre,
+.article-body table,
+.article-body h2,
+.article-body h3 {
+  margin-block: var(--space-lg);
+}
+
+.article-body ul,
+.article-body ol {
+  padding-left: var(--space-lg);
+}
+
+.article-body li + li {
+  margin-top: var(--space-xs);
+}
+
+.article-body h2 {
+  font-size: 1.375rem;
+}
+
+.article-body h3 {
+  font-size: 1.125rem;
+}
+
+.article-body blockquote {
+  margin-inline: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-left: 4px solid var(--color-primary);
+  background: #edf4f2;
+  background: var(--color-primary-muted);
+  color: var(--color-text-muted);
+}
+
 .article-body img {
   display: block;
   max-width: 100%;
   height: auto;
+  margin-block: var(--space-lg);
+  border-radius: 8px;
 }
 
 .article-body pre {
@@ -593,8 +676,20 @@ img {
   color: #f7f5f0;
 }
 
+.article-body code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.article-body pre code {
+  overflow-wrap: normal;
+  white-space: pre;
+}
+
 .article-body table {
   display: block;
+  width: 100%;
   max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
@@ -619,6 +714,20 @@ img {
 
 .error-card {
   width: min(100%, 560px);
+}
+
+.error-card h1 {
+  margin-top: var(--space-sm);
+  font-size: var(--page-title-size);
+}
+
+.error-card > p:not(.eyebrow) {
+  margin-top: var(--space-md);
+  color: var(--color-text-muted);
+}
+
+.error-card .button {
+  margin-top: var(--space-lg);
 }
 
 @media (hover: hover) {

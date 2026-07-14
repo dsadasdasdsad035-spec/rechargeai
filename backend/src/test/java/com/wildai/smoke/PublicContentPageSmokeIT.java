@@ -46,10 +46,14 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
         assertPublishedArticleBrandStructure(articleDetail.getResponse()
                 .getContentAsString(StandardCharsets.UTF_8));
 
-        mockMvc.perform(get("/articles"))
+        var articleList = mockMvc.perform(get("/articles"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
-                .andExpect(content().string(containsString("SEO 指南")));
+                .andExpect(content().string(containsString("SEO 指南")))
+                .andReturn();
+
+        assertPublishedArticleListStructure(articleList.getResponse()
+                .getContentAsString(StandardCharsets.UTF_8));
 
         mockMvc.perform(post("/admin/api/articles/" + articleId + "/withdraw")
                         .header("Authorization", "Bearer " + adminToken))
@@ -125,6 +129,19 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
         assertThat(logoMark.text()).isEqualTo("R");
         assertThat(logoText).isNotNull();
         assertThat(logoText.text()).isEqualTo("RechargeAi");
+    }
+
+    private void assertPublishedArticleListStructure(String html) {
+        Document document = Jsoup.parse(html);
+        Element articleCard = document.selectFirst("article.article-card");
+
+        assertThat(articleCard).isNotNull();
+        assertThat(articleCard.selectFirst(
+                "h2 > a.card-link[href='/articles/seo-guide']"))
+                .isNotNull();
+        Element summary = articleCard.selectFirst("p.article-card__summary");
+        assertThat(summary).isNotNull();
+        assertThat(summary.text()).isEqualTo("适用于主流浏览器的 SEO 指南");
     }
 
     private void assertProductListVisualStructure(String html) {
@@ -222,18 +239,34 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
     }
 
     private void assertArticleNotFound(String path, String privateText) throws Exception {
-        mockMvc.perform(get(path))
+        var result = mockMvc.perform(get(path))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(containsString("页面不存在")))
-                .andExpect(content().string(not(containsString(privateText))));
+                .andExpect(content().string(not(containsString(privateText))))
+                .andReturn();
+
+        assertPublicNotFoundStructure(result.getResponse()
+                .getContentAsString(StandardCharsets.UTF_8));
     }
 
     private void assertProductNotFound(long productId, String privateText) throws Exception {
-        mockMvc.perform(get("/products/" + productId))
+        var result = mockMvc.perform(get("/products/" + productId))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(containsString("页面不存在")))
-                .andExpect(content().string(not(containsString(privateText))));
+                .andExpect(content().string(not(containsString(privateText))))
+                .andReturn();
+
+        assertPublicNotFoundStructure(result.getResponse()
+                .getContentAsString(StandardCharsets.UTF_8));
+    }
+
+    private void assertPublicNotFoundStructure(String html) {
+        Document document = Jsoup.parse(html);
+
+        assertThat(document.selectFirst("article.error-card")).isNotNull();
+        assertThat(document.selectFirst("a.button[href='/products']")).isNotNull();
+        assertThat(document.selectFirst("header .logo .logo__mark")).isNotNull();
     }
 }

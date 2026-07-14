@@ -40,4 +40,27 @@ class PublicStyleContractTest {
                 .containsPattern("(?s)\\.article-heading\\s+h1\\s*\\{"
                         + "[^}]*font-size:\\s*var\\(--article-title-size\\)[^}]*}");
     }
+
+    @Test
+    void contentPagesUseBrandRhythm() throws IOException {
+        String css = new ClassPathResource("static/seo/site.css")
+                .getContentAsString(StandardCharsets.UTF_8);
+
+        assertThat(css)
+                .containsPattern("(?s)\\.article-card\\s*\\{"
+                        + "(?=[^}]*display:\\s*flex)"
+                        + "(?=[^}]*flex-direction:\\s*column)"
+                        + "(?=[^}]*gap:\\s*var\\(--space-md\\))"
+                        + "[^}]*}")
+                .containsPattern("(?s)\\.article-heading\\s+\\.meta\\s*\\{"
+                        + "[^}]*margin-top:\\s*var\\(--space-sm\\)[^}]*}")
+                .containsPattern("(?s)\\.article-body\\s*>\\s*:\\s*first-child\\s*\\{"
+                        + "[^}]*margin-top:\\s*0[^}]*}")
+                .containsPattern("(?s)\\.article-body\\s*>\\s*:\\s*last-child\\s*\\{"
+                        + "[^}]*margin-bottom:\\s*0[^}]*}")
+                .containsPattern("(?s)\\.article-body\\s+p\\s*\\{"
+                        + "[^}]*margin-block:\\s*var\\(--space-md\\)[^}]*}")
+                .containsPattern("(?s)\\.error-card\\s+\\.button\\s*\\{"
+                        + "[^}]*margin-top:\\s*var\\(--space-lg\\)[^}]*}");
+    }
 }
