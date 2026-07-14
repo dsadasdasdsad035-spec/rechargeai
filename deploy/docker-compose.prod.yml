@@ -74,6 +74,15 @@ services:
       WILDAI_SEO_BASE_URL: ${WILDAI_SEO_BASE_URL:-https://rechargeai.cn}
     expose:
       - "8080"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   nginx:
     image: nginx:1.27-alpine

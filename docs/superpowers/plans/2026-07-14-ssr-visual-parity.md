@@ -280,15 +280,23 @@ const productTitleSize = await page.locator('.page-heading h1').evaluate((elemen
 expect(productTitleSize).toBeLessThanOrEqual(28)
 ```
 
-- [ ] **步骤 3：增加移动端 Chromium 项目**
+- [ ] **步骤 3：增加三类窄屏项目**
 
 `playwright.config.ts` 的 `projects` 增加：
 
 ```ts
 { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+{
+  name: 'narrow-firefox',
+  use: {
+    ...devices['Desktop Firefox'],
+    viewport: { width: 393, height: 851 },
+  },
+},
+{ name: 'mobile-webkit', use: { ...devices['iPhone 13'] } },
 ```
 
-现有 Chromium、Firefox、WebKit 项目保持不变。
+现有 Chromium、Firefox、WebKit 桌面项目保持不变。窄屏 Firefox 使用桌面 Firefox UA 配合约 393×851 的视口，验证响应式导航不依赖移动 UA；三个窄屏项目均执行菜单闭合、展开、再闭合的计算样式和横向溢出断言。
 
 - [ ] **步骤 4：运行前端类型检查与构建**
 
@@ -309,7 +317,7 @@ cd frontend-user
 PUBLIC_BASE_URL=http://localhost:8080 npm run test:e2e
 ```
 
-预期：Chromium、Firefox、WebKit、mobile-chromium 共 4 个项目全部 PASS。
+预期：Chromium、Firefox、WebKit 三个桌面项目，以及 Pixel 7 Chromium、窄屏 Firefox、iPhone 13 WebKit 三个窄屏项目，共 6 个项目全部 PASS。
 
 - [ ] **步骤 6：提交文章与浏览器验收修复**
 
@@ -410,18 +418,9 @@ bash scripts/test-deploy-contract.sh
 ./deploy/deploy.sh
 ```
 
-部署脚本的远程启动命令必须包含 `--force-recreate backend nginx`。预期：后端和两端前端构建完成，部署包上传，生产 backend/nginx 容器强制重建，确保挂载的新 JAR、Nginx 配置和静态卷全部重新加载。
+部署脚本自动计算本地构建 JAR 与远端 `/opt/wildai/wildai-backend-0.1.0-SNAPSHOT.jar` 的 SHA256，摘要不一致立即失败。摘要一致后仅强制重建 backend，轮询容器 `Health.Status` 到 `healthy`，再强制重建 nginx；最后轮询公网 `/actuator/health` 到 `UP`，并读取、输出 backend/nginx 的 `Running` 与 `StartedAt`。
 
-部署后在生产服务器核验容器启动时间和 JAR 摘要，并与本次发布产物比对：
-
-```bash
-docker inspect -f '{{.Name}} {{.State.StartedAt}}' wildai-backend wildai-nginx
-sha256sum /opt/wildai/wildai-backend-0.1.0-SNAPSHOT.jar
-sha256sum backend/target/wildai-backend-0.1.0-SNAPSHOT.jar
-curl -fsS https://rechargeai.cn/seo/site.css | rg 'mobile-nav\[open\]|aspect-ratio:\s*16\s*/\s*9'
-```
-
-预期：两个容器启动时间晚于本次部署开始时间，生产 JAR 与本地构建产物摘要一致，线上 CSS 包含移动菜单打开态与文章图片比例规则。
+当前为单实例部署，backend 强制重建会产生可接受的短暂不可用窗口。部署成功门禁为：本地/远端 JAR SHA256 一致、backend 容器健康、公开健康端点返回 `UP`；任一条件不满足均不得报告部署完成。
 
 - [ ] **步骤 4：运行生产 smoke test**
 

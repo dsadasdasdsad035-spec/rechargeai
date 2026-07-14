@@ -22,9 +22,9 @@ function assertWriteTargetIsAllowed(testInfo: TestInfo) {
 }
 
 function expectConfiguredBrowser(projectName: string, browserName: string | undefined) {
-  const expectedBrowserName = projectName === 'firefox'
+  const expectedBrowserName = projectName === 'firefox' || projectName === 'narrow-firefox'
     ? 'firefox'
-    : projectName === 'webkit'
+    : projectName === 'webkit' || projectName === 'mobile-webkit'
       ? 'webkit'
       : 'chromium'
   expect(browserName).toBe(expectedBrowserName)
@@ -38,7 +38,9 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 async function expectResponsiveNavigation(page: Page, projectName: string) {
-  if (projectName === 'mobile-chromium') {
+  const usesNarrowNavigation = projectName.startsWith('mobile-')
+    || projectName.startsWith('narrow-')
+  if (usesNarrowNavigation) {
     const menuToggle = page.locator('.menu-toggle')
     const mobilePanel = page.locator('.mobile-nav__panel')
     await expect(menuToggle).toBeVisible()
@@ -47,12 +49,14 @@ async function expectResponsiveNavigation(page: Page, projectName: string) {
     await menuToggle.click()
 
     await expect(mobilePanel).toBeVisible()
+    await expect(mobilePanel).toHaveCSS('display', 'flex')
     for (const linkName of ['服务', '文章', '交易记录', '登录']) {
       await expect(mobilePanel.getByRole('link', { name: linkName, exact: true })).toBeVisible()
     }
     await expectNoHorizontalOverflow(page)
     await menuToggle.click()
     await expect(mobilePanel).toBeHidden()
+    await expect(mobilePanel).toHaveCSS('display', 'none')
     return
   }
 
