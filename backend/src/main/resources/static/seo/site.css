@@ -560,12 +560,9 @@ img {
 .article-cover {
   display: block;
   width: 100%;
+  aspect-ratio: 16 / 9;
   border-radius: 8px;
   object-fit: cover;
-}
-
-.card-image {
-  aspect-ratio: 16 / 9;
 }
 
 .article-card {
@@ -788,7 +785,7 @@ img {
     top: var(--header-height);
     right: 0;
     left: 0;
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-xs);
@@ -797,6 +794,10 @@ img {
     background: #fffdfa;
     background: var(--color-surface-raised);
     box-shadow: var(--shadow-md);
+  }
+
+  .mobile-nav[open] .mobile-nav__panel {
+    display: flex;
   }
 
   .mobile-nav__panel .nav__link {

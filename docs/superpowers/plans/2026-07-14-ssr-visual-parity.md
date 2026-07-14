@@ -380,6 +380,7 @@ git log --oneline --decorate -5
 **文件：**
 
 - 使用：`deploy/deploy.sh`
+- 使用：`scripts/test-deploy-contract.sh`
 - 使用：`scripts/smoke-test.sh`
 
 - [ ] **步骤 1：推送修复分支**
@@ -405,10 +406,22 @@ git push origin 001-wildai-subscription-platform
 确认现有 `SSHPASS` 环境变量可用后，在主工作树执行：
 
 ```bash
+bash scripts/test-deploy-contract.sh
 ./deploy/deploy.sh
 ```
 
-预期：后端和两端前端构建完成，部署包上传，生产 backend/nginx 容器重新启动。
+部署脚本的远程启动命令必须包含 `--force-recreate backend nginx`。预期：后端和两端前端构建完成，部署包上传，生产 backend/nginx 容器强制重建，确保挂载的新 JAR、Nginx 配置和静态卷全部重新加载。
+
+部署后在生产服务器核验容器启动时间和 JAR 摘要，并与本次发布产物比对：
+
+```bash
+docker inspect -f '{{.Name}} {{.State.StartedAt}}' wildai-backend wildai-nginx
+sha256sum /opt/wildai/wildai-backend-0.1.0-SNAPSHOT.jar
+sha256sum backend/target/wildai-backend-0.1.0-SNAPSHOT.jar
+curl -fsS https://rechargeai.cn/seo/site.css | rg 'mobile-nav\[open\]|aspect-ratio:\s*16\s*/\s*9'
+```
+
+预期：两个容器启动时间晚于本次部署开始时间，生产 JAR 与本地构建产物摘要一致，线上 CSS 包含移动菜单打开态与文章图片比例规则。
 
 - [ ] **步骤 4：运行生产 smoke test**
 

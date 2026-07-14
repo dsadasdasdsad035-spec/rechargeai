@@ -131,6 +131,11 @@ class PublicStyleContractTest {
                 .containsPattern("(?s)\\.article-body\\s+h1,"
                         + "\\s*\\.article-body\\s+h2\\s*\\{"
                         + "[^}]*font-size:\\s*1\\.375rem[^}]*}")
+                .containsPattern("(?s)\\.card-image,"
+                        + "\\s*\\.article-cover\\s*\\{"
+                        + "(?=[^}]*aspect-ratio:\\s*16\\s*/\\s*9)"
+                        + "(?=[^}]*object-fit:\\s*cover)"
+                        + "[^}]*}")
                 .containsPattern("(?s)\\.error-card\\s+\\.button\\s*\\{"
                         + "[^}]*margin-top:\\s*var\\(--space-lg\\)[^}]*}");
     }

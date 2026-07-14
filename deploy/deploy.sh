@@ -64,7 +64,7 @@ cd "$DEPLOY"
 tar czf - --exclude='.env' . | SSHPASS="$SSHPASS" sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER" "mkdir -p $REMOTE_DIR && cd $REMOTE_DIR && tar xzf -"
 
 echo "==> 重启服务（JAR 卷挂载，跳过镜像构建）..."
-SSHPASS="$SSHPASS" sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER" "export DOCKER_HOST=unix:///run/podman/podman.sock && cd $REMOTE_DIR && docker-compose -f docker-compose.prod.yml up -d --no-build backend nginx"
+SSHPASS="$SSHPASS" sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER" "export DOCKER_HOST=unix:///run/podman/podman.sock && cd $REMOTE_DIR && docker-compose -f docker-compose.prod.yml up -d --no-build --force-recreate backend nginx"
 
 echo "==> 部署完成"
 echo "    用户端: ${DEPLOY_DOMAIN}/"

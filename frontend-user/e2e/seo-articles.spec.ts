@@ -40,15 +40,19 @@ async function expectNoHorizontalOverflow(page: Page) {
 async function expectResponsiveNavigation(page: Page, projectName: string) {
   if (projectName === 'mobile-chromium') {
     const menuToggle = page.locator('.menu-toggle')
+    const mobilePanel = page.locator('.mobile-nav__panel')
     await expect(menuToggle).toBeVisible()
+    await expect(mobilePanel).toBeHidden()
+    await expect(mobilePanel).toHaveCSS('display', 'none')
     await menuToggle.click()
 
-    const mobilePanel = page.locator('.mobile-nav__panel')
     await expect(mobilePanel).toBeVisible()
     for (const linkName of ['服务', '文章', '交易记录', '登录']) {
       await expect(mobilePanel.getByRole('link', { name: linkName, exact: true })).toBeVisible()
     }
     await expectNoHorizontalOverflow(page)
+    await menuToggle.click()
+    await expect(mobilePanel).toBeHidden()
     return
   }
 
