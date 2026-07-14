@@ -18,6 +18,26 @@ if [[ ! "$HEALTH_ATTEMPTS" =~ ^[1-9][0-9]*$ || ! "$HEALTH_INTERVAL_SECONDS" =~ ^
   exit 1
 fi
 
+validate_deploy_inputs() {
+  local remote_dir_pattern='^/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$'
+  local server_pattern='^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?@)?[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$'
+
+  if [[ ! "$REMOTE_DIR" =~ $remote_dir_pattern || "$REMOTE_DIR" =~ (^|/)\.{1,2}(/|$) ]]; then
+    echo "错误：远端目录必须是安全绝对路径，且不能包含 . 或 .. 路径段" >&2
+    exit 1
+  fi
+
+  if [[ ! "$SERVER" =~ $server_pattern
+      || "$SERVER" == *..*
+      || "$SERVER" == *.-*
+      || "$SERVER" == *-.* ]]; then
+    echo "错误：部署服务器必须是安全的 user@host、主机名或 IPv4 地址" >&2
+    exit 1
+  fi
+}
+
+validate_deploy_inputs
+
 sha256_file() {
   local file="$1"
   if command -v sha256sum >/dev/null 2>&1; then

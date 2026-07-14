@@ -379,7 +379,7 @@ git status --short
 git log --oneline --decorate -5
 ```
 
-预期：无未提交的任务文件，无空白错误，提交只包含设计、SSR 模板/CSS和对应测试。
+预期：无未提交的任务文件，无空白错误；提交只覆盖本计划内的 SSR 视觉、浏览器验收、部署门禁及对应测试，不包含无关改动。
 
 ---
 
@@ -425,7 +425,7 @@ bash scripts/test-deploy-contract.sh
 - [ ] **步骤 4：运行生产 smoke test**
 
 ```bash
-BASE_URL=https://rechargeai.cn ./scripts/smoke-test.sh
+SMOKE_BASE_URL=https://rechargeai.cn ./scripts/smoke-test.sh
 curl -fsS https://rechargeai.cn/products | rg 'logo__mark|AI 订阅服务|product-card__cta|canonical|application/ld\+json'
 curl -fsS https://rechargeai.cn/seo/site.css | rg -- '--font-serif|--page-title-size|\.logo__mark'
 ```

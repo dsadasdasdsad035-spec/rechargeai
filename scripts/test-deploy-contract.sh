@@ -25,9 +25,36 @@ backend_block="$(awk '
 ' "$COMPOSE_FILE")"
 [[ -n "$backend_block" ]] || fail "生产 Compose 缺少 backend 服务"
 grep -qE '^    healthcheck:$' <<<"$backend_block" || fail "backend 服务缺少 healthcheck"
-grep -q 'wget' <<<"$backend_block" || fail "backend healthcheck 必须使用镜像内置 wget"
-grep -q '/actuator/health' <<<"$backend_block" || fail "backend healthcheck 未访问健康端点"
-grep -q '"status":"UP"' <<<"$backend_block" || fail "backend healthcheck 未校验 UP 状态"
+healthcheck_test="$(awk '
+  /^      test:$/ { capture = 1 }
+  capture && /^      (interval|timeout|retries|start_period):/ { exit }
+  capture { print }
+' <<<"$backend_block" \
+  | sed -E '/^[[:space:]]*#/d; s/[[:space:]]+#.*$//' \
+  | tr '\n' ' ')"
+grep -q 'CMD-SHELL' <<<"$healthcheck_test" || fail "backend healthcheck test 必须执行 Shell 命令"
+grep -qE 'wget .*\/actuator\/health.*status.*UP' <<<"$healthcheck_test" \
+  || fail "backend healthcheck test 命令必须使用 wget 校验 actuator UP"
+
+grep -qF "local remote_dir_pattern='^/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$'" "$DEPLOY_SCRIPT" \
+  || fail "缺少安全远端绝对路径正则"
+grep -qF 'if [[ ! "$REMOTE_DIR" =~ $remote_dir_pattern || "$REMOTE_DIR" =~ (^|/)\.{1,2}(/|$) ]]; then' "$DEPLOY_SCRIPT" \
+  || fail "远端路径必须拒绝非法字符以及 . 或 .. 路径段"
+grep -qF "local server_pattern='^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?@)?[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$'" "$DEPLOY_SCRIPT" \
+  || fail "缺少安全 SSH 服务器格式正则"
+grep -qF 'if [[ ! "$SERVER" =~ $server_pattern' "$DEPLOY_SCRIPT" \
+  || fail "部署脚本未校验 SSH 服务器输入"
+
+input_validation_line="$(command_line '^[[:space:]]*validate_deploy_inputs[[:space:]]*$')"
+first_ssh_line="$(command_line 'sshpass -e ssh')"
+[[ -n "$input_validation_line" ]] || fail "缺少部署输入校验调用"
+[[ -n "$first_ssh_line" ]] || fail "部署脚本缺少 SSH 调用"
+if ! ((input_validation_line < first_ssh_line)); then
+  fail "远端路径与服务器输入必须在首次 SSH 前完成校验"
+fi
+
+grep -qF '[[ ! "$HEALTH_ATTEMPTS" =~ ^[1-9][0-9]*$ || ! "$HEALTH_INTERVAL_SECONDS" =~ ^[1-9][0-9]*$ ]]' "$DEPLOY_SCRIPT" \
+  || fail "健康检查参数必须拒绝 0 和前导零"
 
 actuator_block="$(awk '
   /^[[:space:]]*location \/actuator\/ \{/ { capture = 1 }
