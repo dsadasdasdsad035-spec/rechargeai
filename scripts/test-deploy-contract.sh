@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEPLOY_SCRIPT="$ROOT/deploy/deploy.sh"
 COMPOSE_FILE="$ROOT/deploy/docker-compose.prod.yml"
+NGINX_CONFIG="$ROOT/deploy/nginx.conf"
 
 fail() {
   echo "错误：$1" >&2
@@ -28,16 +29,27 @@ grep -q 'wget' <<<"$backend_block" || fail "backend healthcheck 必须使用镜�
 grep -q '/actuator/health' <<<"$backend_block" || fail "backend healthcheck 未访问健康端点"
 grep -q '"status":"UP"' <<<"$backend_block" || fail "backend healthcheck 未校验 UP 状态"
 
+actuator_block="$(awk '
+  /^[[:space:]]*location \/actuator\/ \{/ { capture = 1 }
+  capture { print }
+  capture && /^[[:space:]]*\}$/ { exit }
+' "$NGINX_CONFIG")"
+[[ -n "$actuator_block" ]] || fail "Nginx 缺少受限 actuator 路由"
+grep -qE '^[[:space:]]*allow 127\.0\.0\.1;' <<<"$actuator_block" \
+  || fail "Nginx actuator 路由必须仅允许回环地址"
+grep -qE '^[[:space:]]*deny all;' <<<"$actuator_block" \
+  || fail "Nginx actuator 路由必须拒绝其他来源"
+
 backend_restart_line="$(command_line '^[[:space:]]*remote_exec "docker-compose -f docker-compose\.prod\.yml up -d --no-deps --no-build --force-recreate backend"[[:space:]]*$')"
 backend_wait_line="$(command_line '^[[:space:]]*wait_for_backend_health[[:space:]]*$')"
 nginx_restart_line="$(command_line '^[[:space:]]*remote_exec "docker-compose -f docker-compose\.prod\.yml up -d --no-deps --no-build --force-recreate nginx"[[:space:]]*$')"
-public_wait_line="$(command_line '^[[:space:]]*wait_for_public_health[[:space:]]*$')"
+public_wait_line="$(command_line '^[[:space:]]*wait_for_public_ssr_ready[[:space:]]*$')"
 state_verify_line="$(command_line '^[[:space:]]*verify_container_state[[:space:]]*$')"
 
 [[ -n "$backend_restart_line" ]] || fail "缺少真实 backend 强制重建命令"
 [[ -n "$backend_wait_line" ]] || fail "缺少 wait_for_backend_health 调用"
 [[ -n "$nginx_restart_line" ]] || fail "缺少真实 nginx 强制重建命令"
-[[ -n "$public_wait_line" ]] || fail "缺少 wait_for_public_health 调用"
+[[ -n "$public_wait_line" ]] || fail "缺少 wait_for_public_ssr_ready 调用"
 [[ -n "$state_verify_line" ]] || fail "缺少 verify_container_state 调用"
 
 if ! ((backend_restart_line < backend_wait_line
@@ -62,14 +74,16 @@ fi
 
 grep -qE '^wait_for_backend_health\(\)[[:space:]]*\{' "$DEPLOY_SCRIPT" \
   || fail "缺少 wait_for_backend_health 函数"
-grep -qE '^wait_for_public_health\(\)[[:space:]]*\{' "$DEPLOY_SCRIPT" \
-  || fail "缺少 wait_for_public_health 函数"
-grep -qE '^[[:space:]]*local health_url=.*actuator/health' "$DEPLOY_SCRIPT" \
-  || fail "公网健康等待未定义 actuator 健康地址"
-grep -qE '^[[:space:]]*response=.*remote_exec "curl .*--resolve .*127\.0\.0\.1.*\$health_url' "$DEPLOY_SCRIPT" \
-  || fail "公网健康检查必须通过 SSH 在远端回环地址执行"
-if grep -qE '^[[:space:]]*response="\$\(curl .*\$health_url' "$DEPLOY_SCRIPT"; then
-  fail "不得从部署机直接请求受限的生产 actuator 端点"
+grep -qE '^wait_for_public_ssr_ready\(\)[[:space:]]*\{' "$DEPLOY_SCRIPT" \
+  || fail "缺少 wait_for_public_ssr_ready 函数"
+grep -qE '^[[:space:]]*local products_url=.*\/products' "$DEPLOY_SCRIPT" \
+  || fail "公开 SSR 等待未定义产品页地址"
+grep -qE '^[[:space:]]*response="\$\(curl .*--write-out .*http_code.*\$products_url' "$DEPLOY_SCRIPT" \
+  || fail "公开 SSR 页面必须从部署机直接请求"
+grep -qE '^[[:space:]]*if \[\[ "\$http_status" == "200" \]\] && grep -q .*logo__mark' "$DEPLOY_SCRIPT" \
+  || fail "公开 SSR 页面必须校验 HTTP 200 与稳定品牌标记"
+if grep -qE '^[[:space:]]*[^#].*curl .*actuator/health' "$DEPLOY_SCRIPT"; then
+  fail "不得从外部路径请求受限 actuator 健康端点"
 fi
 grep -qE '^verify_container_state\(\)[[:space:]]*\{' "$DEPLOY_SCRIPT" \
   || fail "缺少 verify_container_state 函数"
@@ -78,4 +92,4 @@ grep -qE '^[[:space:]]*health_status=.*remote_exec ".*docker inspect -f .*State\
 grep -qE '^[[:space:]]*container_state=.*remote_exec ".*docker inspect -f .*State\.Running.*State\.StartedAt' "$DEPLOY_SCRIPT" \
   || fail "容器状态核验缺少 Running 或 StartedAt"
 
-echo "部署脚本就绪、摘要与状态契约通过"
+echo "部署脚本就绪、摘要、双层门禁与状态契约通过"

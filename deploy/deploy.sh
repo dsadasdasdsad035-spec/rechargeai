@@ -53,24 +53,25 @@ wait_for_backend_health() {
   return 1
 }
 
-wait_for_public_health() {
+wait_for_public_ssr_ready() {
   local attempt
+  local http_status
+  local page_html
   local response
-  local health_url="${DEPLOY_DOMAIN%/}/actuator/health"
-  local health_host="${DEPLOY_DOMAIN#*://}"
-  health_host="${health_host%%/*}"
-  health_host="${health_host%%:*}"
+  local products_url="${DEPLOY_DOMAIN%/}/products"
   for ((attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++)); do
-    response="$(remote_exec "curl -fsS --max-time 10 --resolve '$health_host:443:127.0.0.1' '$health_url'" 2>/dev/null || true)"
-    if grep -qE '"status"[[:space:]]*:[[:space:]]*"UP"' <<<"$response"; then
-      echo "==> 公网健康检查通过"
+    response="$(curl -sS --max-time 10 --write-out $'\n%{http_code}' "$products_url" 2>/dev/null || true)"
+    http_status="${response##*$'\n'}"
+    page_html="${response%$'\n'*}"
+    if [[ "$http_status" == "200" ]] && grep -q 'logo__mark' <<<"$page_html"; then
+      echo "==> 公开 SSR 产品页就绪"
       return 0
     fi
     if ((attempt < HEALTH_ATTEMPTS)); then
       sleep "$HEALTH_INTERVAL_SECONDS"
     fi
   done
-  echo "错误：公网健康端点未在限定时间内返回 UP" >&2
+  echo "错误：公开 SSR 产品页未在限定时间内返回 200 且包含品牌标记" >&2
   return 1
 }
 
@@ -159,7 +160,7 @@ wait_for_backend_health
 
 echo "==> 后端健康后强制重建 Nginx..."
 remote_exec "docker-compose -f docker-compose.prod.yml up -d --no-deps --no-build --force-recreate nginx"
-wait_for_public_health
+wait_for_public_ssr_ready
 verify_container_state
 
 echo "==> 部署完成"

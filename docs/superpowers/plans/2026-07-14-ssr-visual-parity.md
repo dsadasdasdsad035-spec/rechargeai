@@ -418,9 +418,9 @@ bash scripts/test-deploy-contract.sh
 ./deploy/deploy.sh
 ```
 
-部署脚本自动计算本地构建 JAR 与远端 `/opt/wildai/wildai-backend-0.1.0-SNAPSHOT.jar` 的 SHA256，摘要不一致立即失败。摘要一致后仅强制重建 backend，轮询容器 `Health.Status` 到 `healthy`，再强制重建 nginx；最后轮询公网 `/actuator/health` 到 `UP`，并读取、输出 backend/nginx 的 `Running` 与 `StartedAt`。
+部署脚本自动计算本地构建 JAR 与远端 `/opt/wildai/wildai-backend-0.1.0-SNAPSHOT.jar` 的 SHA256，摘要不一致立即失败。摘要一致后仅强制重建 backend；backend 容器内 healthcheck 访问 `/actuator/health` 并校验 `UP`，部署脚本轮询容器 `Health.Status` 到 `healthy` 后再强制重建 nginx。最后从部署机轮询公开 `/products`，要求 HTTP 200 且 SSR HTML 包含 `logo__mark`，再读取、输出 backend/nginx 的 `Running` 与 `StartedAt`。受限 actuator 端点不作为外部探测地址。
 
-当前为单实例部署，backend 强制重建会产生可接受的短暂不可用窗口。部署成功门禁为：本地/远端 JAR SHA256 一致、backend 容器健康、公开健康端点返回 `UP`；任一条件不满足均不得报告部署完成。
+当前为单实例部署，backend 强制重建会产生可接受的短暂不可用窗口。部署成功门禁为：本地/远端 JAR SHA256 一致、backend 容器 healthcheck 健康、公开 `/products` 返回 200 且包含 SSR 品牌标记；任一条件不满足均不得报告部署完成。
 
 - [ ] **步骤 4：运行生产 smoke test**
 
