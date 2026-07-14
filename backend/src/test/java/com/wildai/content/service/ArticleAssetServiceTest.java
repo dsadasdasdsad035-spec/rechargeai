@@ -11,7 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -21,6 +24,7 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArticleAssetServiceTest {
@@ -39,6 +43,46 @@ class ArticleAssetServiceTest {
         properties.getArticle().setMaxImageBytes(MAX_IMAGE_BYTES);
         service = new ArticleAssetService(properties);
         service.ensureUploadDir();
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = {" ", "\t"})
+    void constructorRejectsMissingUploadDirectory(String uploadDirectory) {
+        WildAiProperties properties = new WildAiProperties();
+        properties.getArticle().setUploadDir(uploadDirectory);
+
+        assertThatThrownBy(() -> new ArticleAssetService(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("文章图片上传目录不能为空");
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {0, -1})
+    void constructorRejectsNonPositiveMaxImageBytes(long maxImageBytes) {
+        WildAiProperties properties = articleProperties(uploadDir, maxImageBytes);
+
+        assertThatThrownBy(() -> new ArticleAssetService(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("文章图片大小上限必须大于 0");
+    }
+
+    @Test
+    void constructorRejectsMaxImageBytesAboveServletLimit() {
+        WildAiProperties properties = articleProperties(uploadDir, 52L * 1024 * 1024 + 1);
+
+        assertThatThrownBy(() -> new ArticleAssetService(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("文章图片大小上限不能超过 52MB");
+    }
+
+    @Test
+    void constructorAcceptsDefaultsAndValidTemporaryDirectory() {
+        assertThatCode(() -> new ArticleAssetService(new WildAiProperties()))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> new ArticleAssetService(articleProperties(uploadDir, MAX_IMAGE_BYTES)))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -210,5 +254,12 @@ class ArticleAssetServiceTest {
             result[i] = (byte) values[i];
         }
         return result;
+    }
+
+    private static WildAiProperties articleProperties(Path uploadDirectory, long maxImageBytes) {
+        WildAiProperties properties = new WildAiProperties();
+        properties.getArticle().setUploadDir(uploadDirectory.toString());
+        properties.getArticle().setMaxImageBytes(maxImageBytes);
+        return properties;
     }
 }

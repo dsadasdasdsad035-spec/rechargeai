@@ -12,6 +12,7 @@ import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -50,6 +51,14 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorCode.NOT_FOUND.getCode(), ErrorCode.NOT_FOUND.getMessage()));
     }
 
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(mapStatus(ErrorCode.PAYLOAD_TOO_LARGE))
+                .body(ApiResponse.fail(
+                        ErrorCode.PAYLOAD_TOO_LARGE.getCode(),
+                        ErrorCode.PAYLOAD_TOO_LARGE.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleOther(Exception ex) {
         log.error("未处理异常", ex);
@@ -63,7 +72,9 @@ public class GlobalExceptionHandler {
             case FORBIDDEN, ACCOUNT_DISABLED -> HttpStatus.FORBIDDEN;
             case NOT_FOUND -> HttpStatus.NOT_FOUND;
             case CONFLICT, ORDER_DUPLICATE -> HttpStatus.CONFLICT;
+            case PAYLOAD_TOO_LARGE -> HttpStatus.PAYLOAD_TOO_LARGE;
             case RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
+            case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
             default -> HttpStatus.BAD_REQUEST;
         };
     }

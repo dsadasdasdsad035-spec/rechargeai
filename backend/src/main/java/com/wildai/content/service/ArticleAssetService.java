@@ -29,16 +29,29 @@ public class ArticleAssetService {
     private static final Pattern SUPPORTED_FILENAME_PATTERN =
             Pattern.compile("(?i).*\\.(jpe?g|png|gif|webp)$");
     private static final MediaType IMAGE_WEBP = MediaType.parseMediaType("image/webp");
+    private static final long SERVLET_MULTIPART_MAX_BYTES = 52L * 1024 * 1024;
 
     private final Path configuredUploadRoot;
     private final long maxImageBytes;
     private Path uploadRoot;
 
     public ArticleAssetService(WildAiProperties properties) {
-        this.configuredUploadRoot = Path.of(properties.getArticle().getUploadDir())
+        WildAiProperties.Article article = properties.getArticle();
+        String uploadDirectory = article.getUploadDir();
+        if (uploadDirectory == null || uploadDirectory.isBlank()) {
+            throw new IllegalStateException("文章图片上传目录不能为空");
+        }
+        if (article.getMaxImageBytes() <= 0) {
+            throw new IllegalStateException("文章图片大小上限必须大于 0");
+        }
+        if (article.getMaxImageBytes() > SERVLET_MULTIPART_MAX_BYTES) {
+            throw new IllegalStateException("文章图片大小上限不能超过 52MB");
+        }
+
+        this.configuredUploadRoot = Path.of(uploadDirectory)
                 .toAbsolutePath()
                 .normalize();
-        this.maxImageBytes = properties.getArticle().getMaxImageBytes();
+        this.maxImageBytes = article.getMaxImageBytes();
     }
 
     @PostConstruct

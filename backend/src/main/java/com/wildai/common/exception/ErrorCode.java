@@ -6,6 +6,7 @@ public enum ErrorCode {
     FORBIDDEN("403", "无权限访问"),
     NOT_FOUND("404", "资源不存在"),
     CONFLICT("409", "业务冲突"),
+    PAYLOAD_TOO_LARGE("413", "上传文件过大"),
     RATE_LIMITED("429", "请求过于频繁"),
     INTERNAL_ERROR("500", "系统内部错误"),
     ORDER_DUPLICATE("ORDER_001", "存在进行中的同产品订单"),
