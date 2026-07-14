@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEPLOY_SCRIPT="$ROOT/deploy/deploy.sh"
-COMPOSE_FILE="$ROOT/deploy/docker-compose.prod.yml"
+COMPOSE_FILE="${DEPLOY_CONTRACT_COMPOSE_FILE:-$ROOT/deploy/docker-compose.prod.yml}"
 NGINX_CONFIG="$ROOT/deploy/nginx.conf"
 
 fail() {
@@ -16,6 +16,7 @@ command_line() {
   grep -nE "$pattern" "$DEPLOY_SCRIPT" | head -n 1 | cut -d: -f1 || true
 }
 
+[[ -x "$DEPLOY_SCRIPT" ]] || fail "部署脚本必须具有可执行权限"
 bash -n "$DEPLOY_SCRIPT" || fail "部署脚本存在 Bash 语法错误"
 
 backend_block="$(awk '
@@ -25,16 +26,35 @@ backend_block="$(awk '
 ' "$COMPOSE_FILE")"
 [[ -n "$backend_block" ]] || fail "生产 Compose 缺少 backend 服务"
 grep -qE '^    healthcheck:$' <<<"$backend_block" || fail "backend 服务缺少 healthcheck"
-healthcheck_test="$(awk '
+healthcheck_test_block="$(awk '
   /^      test:$/ { capture = 1 }
   capture && /^      (interval|timeout|retries|start_period):/ { exit }
   capture { print }
-' <<<"$backend_block" \
-  | sed -E '/^[[:space:]]*#/d; s/[[:space:]]+#.*$//' \
-  | tr '\n' ' ')"
-grep -q 'CMD-SHELL' <<<"$healthcheck_test" || fail "backend healthcheck test 必须执行 Shell 命令"
-grep -qE 'wget .*\/actuator\/health.*status.*UP' <<<"$healthcheck_test" \
-  || fail "backend healthcheck test 命令必须使用 wget 校验 actuator UP"
+' <<<"$backend_block")"
+first_test_item="$(awk '/^        - / { print; exit }' <<<"$healthcheck_test_block")"
+second_test_item="$(awk '/^        - / { count++; if (count == 2) { print; exit } }' <<<"$healthcheck_test_block")"
+test_item_count="$(awk '/^        - / { count++ } END { print count + 0 }' <<<"$healthcheck_test_block")"
+[[ "$first_test_item" == "        - CMD-SHELL" && "$second_test_item" == "        - >-" && "$test_item_count" == "2" ]] \
+  || fail "backend healthcheck test 必须由 CMD-SHELL 和一条 Shell 命令组成"
+
+healthcheck_command="$(awk '
+  /^        - >-[[:space:]]*$/ { capture = 1; next }
+  capture && /^          / {
+    line = $0
+    sub(/^          /, "", line)
+    sub(/[[:space:]]+#.*$/, "", line)
+    if (line !~ /^[[:space:]]*$/) {
+      printf "%s%s", separator, line
+      separator = " "
+    }
+    next
+  }
+  capture { exit }
+  END { print "" }
+' <<<"$healthcheck_test_block")"
+expected_healthcheck_command='wget -qO- http://localhost:8080/actuator/health | grep -q '\''"status":"UP"'\'''
+[[ "$healthcheck_command" == "$expected_healthcheck_command" ]] \
+  || fail "backend healthcheck 第二条命令必须以 wget 调用本机 actuator，并通过 grep -q 精确校验 UP"
 
 grep -qF "local remote_dir_pattern='^/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$'" "$DEPLOY_SCRIPT" \
   || fail "缺少安全远端绝对路径正则"
