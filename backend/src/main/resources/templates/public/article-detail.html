@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{public/fragments :: head(${seo})}">
+  <title>文章详情 | RechargeAi</title>
+</head>
+<body>
+<header th:replace="~{public/fragments :: siteHeader}"></header>
+<main class="page">
+  <article class="article">
+    <header class="article-heading">
+      <a class="back-link" href="/articles">返回文章中心</a>
+      <h1 th:text="${article.title}">文章标题</h1>
+      <p class="lead" th:text="${article.summary}">文章摘要</p>
+      <p class="meta" th:if="${article.publishedAt != null}" th:text="${article.publishedAt}">发布时间</p>
+      <img class="article-cover" th:if="${article.coverImageUrl != null}"
+           th:src="${article.coverImageUrl}" th:alt="${article.title}">
+    </header>
+    <div class="article-body" th:utext="${article.contentHtml}"></div>
+  </article>
+</main>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{public/fragments :: head(${seo})}">
+  <title>产品详情 | RechargeAi</title>
+</head>
+<body>
+<header th:replace="~{public/fragments :: siteHeader}"></header>
+<main class="page">
+  <article class="article product-detail">
+    <header class="article-heading">
+      <a class="back-link" href="/products">返回产品列表</a>
+      <p class="eyebrow" th:text="${product.serviceType}">服务类型</p>
+      <h1 th:text="${product.name}">产品名称</h1>
+    </header>
+    <section class="product-panel" aria-label="产品信息">
+      <p class="price">
+        <span th:text="${product.salePrice}">0.00</span>
+        <span th:text="${product.currency}">CNY</span>
+      </p>
+      <p th:if="${product.periodDays != null}">
+        服务周期：<span th:text="${product.periodDays}">30</span> 天
+      </p>
+      <p th:if="${product.estimatedHours != null}">
+        预计处理：<span th:text="${product.estimatedHours}">1</span> 小时
+      </p>
+      <p th:if="${product.complianceNotice != null}" th:text="${product.complianceNotice}">合规说明</p>
+      <p th:if="${product.refundPolicyText != null}" th:text="${product.refundPolicyText}">退款说明</p>
+      <a class="button" th:href="@{/checkout/{id}(id=${product.id})}">立即购买</a>
+    </section>
+  </article>
+</main>
+</body>
+</html>

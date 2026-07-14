@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(seo)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f5f0">
+  <meta name="robots" th:content="${seo.robots}">
+  <title th:text="${seo.title}">RechargeAi</title>
+  <meta name="description" th:content="${seo.description}">
+  <link rel="canonical" th:href="${seo.canonical}">
+  <meta property="og:title" th:content="${seo.title}">
+  <meta property="og:description" th:content="${seo.description}">
+  <meta property="og:type" th:content="${seo.type}">
+  <meta property="og:url" th:content="${seo.canonical}">
+  <meta property="og:image" th:if="${seo.imageUrl != null}" th:content="${seo.imageUrl}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/seo/site.css">
+  <script type="application/ld+json" th:utext="${seo.jsonLd}"></script>
+</head>
+<body>
+<header class="site-header" th:fragment="siteHeader">
+  <div class="site-inner">
+    <nav class="site-nav" aria-label="主导航">
+      <a class="brand" href="/products">RechargeAi</a>
+      <div class="nav-links">
+        <a href="/products">订阅产品</a>
+        <a href="/articles">文章中心</a>
+        <a href="/account">我的账户</a>
+      </div>
+    </nav>
+  </div>
+</header>
+</body>
+</html>

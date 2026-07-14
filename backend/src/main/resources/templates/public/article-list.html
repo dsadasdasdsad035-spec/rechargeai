@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{public/fragments :: head(${seo})}">
+  <title>文章中心 | RechargeAi</title>
+</head>
+<body>
+<header th:replace="~{public/fragments :: siteHeader}"></header>
+<main class="page">
+  <header class="page-heading">
+    <p class="eyebrow">RechargeAi 文章</p>
+    <h1>文章中心</h1>
+    <p>了解 AI 订阅、使用技巧与服务说明。</p>
+  </header>
+  <section class="grid" aria-label="文章列表" th:if="${!articles.isEmpty()}">
+    <article class="card" th:each="article : ${articles}">
+      <img class="card-image" th:if="${article.coverImageUrl != null}"
+           th:src="${article.coverImageUrl}" th:alt="${article.title}" loading="lazy">
+      <p class="meta" th:if="${article.publishedAt != null}" th:text="${article.publishedAt}">发布时间</p>
+      <h2>
+        <a class="card-link" th:href="@{/articles/{slug}(slug=${article.slug})}"
+           th:text="${article.title}">文章标题</a>
+      </h2>
+      <p th:text="${article.summary}">文章摘要</p>
+    </article>
+  </section>
+  <p class="empty-state" th:if="${articles.isEmpty()}">暂时还没有已发布的文章，请稍后再来。</p>
+</main>
+</body>
+</html>

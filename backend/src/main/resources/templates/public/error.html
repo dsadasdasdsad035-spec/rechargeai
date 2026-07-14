@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f5f0">
+  <meta name="robots" content="noindex,nofollow">
+  <title th:text="${statusCode == 404 ? '页面不存在 | RechargeAi' : '页面暂时不可用 | RechargeAi'}">页面不可用 | RechargeAi</title>
+  <meta name="description" content="当前页面无法访问，请返回 RechargeAi 公开内容页。">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/seo/site.css">
+</head>
+<body>
+<header th:replace="~{public/fragments :: siteHeader}"></header>
+<main class="page error-page">
+  <article class="error-card">
+    <p class="eyebrow" th:text="${statusCode}">404</p>
+    <h1 th:text="${pageMessage}">页面不存在</h1>
+    <p>你访问的内容可能已下线或地址有误。</p>
+    <a class="button" href="/products">返回产品列表</a>
+  </article>
+</main>
+</body>
+</html>

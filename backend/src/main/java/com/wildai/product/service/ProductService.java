@@ -46,6 +46,11 @@ public class ProductService {
         return toDto(p, true);
     }
 
+    public ProductDetailDto getOnShelfById(Long id) {
+        AiServiceProduct product = requireOnShelf(id);
+        return toDto(product, true);
+    }
+
     public AiServiceProduct requireOnShelf(Long id) {
         AiServiceProduct p = productRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "产品不存在"));

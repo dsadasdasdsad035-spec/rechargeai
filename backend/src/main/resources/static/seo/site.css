@@ -1,0 +1,261 @@
+:root {
+  --color-primary: #1f6b56;
+  --color-primary: oklch(0.42 0.09 165);
+  --color-bg: #f7f5f0;
+  --color-bg: oklch(0.98 0.008 85);
+  --color-text: #3d3a36;
+  --color-heading: #1f1d1a;
+  --color-border: #e8e4dc;
+  --content-max: 960px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--color-primary);
+  text-underline-offset: 0.18em;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--color-heading);
+  line-height: 1.2;
+}
+
+.site-header {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: #f7f5f0;
+  background: rgb(247 245 240 / 92%);
+}
+
+@supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+  .site-header {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
+.site-inner,
+.page {
+  width: min(100% - 2rem, var(--content-max));
+  margin-inline: auto;
+}
+
+.site-nav {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-nav a,
+.card-link,
+.back-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
+
+.brand {
+  color: var(--color-heading);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+}
+
+.page {
+  padding-block: 3rem 4rem;
+}
+
+.page-heading,
+.article-heading {
+  margin-bottom: 2rem;
+}
+
+.page-heading h1,
+.article-heading h1 {
+  margin-block: 0.25rem 0.75rem;
+  font-size: clamp(2rem, 7vw, 3.75rem);
+}
+
+.eyebrow,
+.meta {
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.card,
+.product-panel,
+.error-card {
+  display: block;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.card h2 {
+  margin-block: 0.25rem;
+}
+
+.card-link {
+  color: var(--color-heading);
+}
+
+.card-image,
+.article-cover {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.card-image {
+  aspect-ratio: 16 / 9;
+}
+
+.article {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.lead {
+  max-width: 65ch;
+  font-size: 1.125rem;
+}
+
+.article-body {
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.article-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.article-body pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #1f1d1a;
+  color: #f7f5f0;
+}
+
+.article-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.article-body th,
+.article-body td {
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+}
+
+.price {
+  color: var(--color-heading);
+  font-size: 1.5rem;
+  font-weight: 750;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.empty-state,
+.error-card {
+  text-align: center;
+}
+
+.error-page {
+  display: grid;
+  min-height: 65vh;
+  place-items: center;
+}
+
+.error-card {
+  width: min(100%, 560px);
+}
+
+@media (max-width: 639px) {
+  .site-nav,
+  .nav-links {
+    flex-wrap: wrap;
+  }
+
+  .site-nav {
+    padding-block: 0.5rem;
+  }
+
+  .page {
+    padding-block: 2rem 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
