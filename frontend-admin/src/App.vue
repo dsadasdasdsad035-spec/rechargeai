@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ChatDotRound, Document, Goods, User, SwitchButton, List, Money, Key, Notebook, Wallet, Setting } from '@element-plus/icons-vue'
+import { ChatDotRound, Document, Goods, User, SwitchButton, List, Money, Key, Notebook, Reading, Wallet, Setting } from '@element-plus/icons-vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 const route = useRoute()
@@ -10,6 +10,7 @@ const router = useRouter()
 const activeMenu = computed(() => {
   if (route.path.startsWith('/products')) return '/products'
   if (route.path.startsWith('/service-types')) return '/service-types'
+  if (route.path.startsWith('/articles')) return '/articles'
   if (route.path.startsWith('/fulfillment')) return '/fulfillment'
   if (route.path.startsWith('/support')) return '/support'
   if (route.path.startsWith('/refunds')) return '/refunds'
@@ -80,6 +81,10 @@ function logout() {
             <el-menu-item index="/products">产品列表</el-menu-item>
             <el-menu-item index="/service-types">服务类型教程</el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="/articles">
+            <el-icon><Reading /></el-icon>
+            <span>文章管理</span>
+          </el-menu-item>
           <el-menu-item index="/users">
             <el-icon><User /></el-icon>
             <span>用户管理</span>
