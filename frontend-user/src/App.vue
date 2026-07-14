@@ -21,10 +21,10 @@ function logout() {
 <template>
   <header class="header">
     <div class="header__inner">
-      <RouterLink to="/products" class="logo" @click="closeMenu">
+      <a href="/products" class="logo" @click="closeMenu">
         <span class="logo__mark">R</span>
         <span class="logo__text">RechargeAi</span>
-      </RouterLink>
+      </a>
 
       <button
         class="menu-toggle"
@@ -36,14 +36,14 @@ function logout() {
       </button>
 
       <nav class="nav" :class="{ 'nav--open': menuOpen }">
-        <RouterLink
-          to="/products"
+        <a
+          href="/products"
           class="nav__link"
-          active-class="nav__link--active"
           @click="closeMenu"
         >
           服务
-        </RouterLink>
+        </a>
+        <a href="/articles" class="nav__link" @click="closeMenu">文章</a>
         <RouterLink
           to="/transaction-record"
           class="nav__link"
@@ -80,7 +80,9 @@ function logout() {
   position: sticky;
   top: 0;
   z-index: 100;
+  background: #f7f5f0;
   background: oklch(0.98 0.008 85 / 0.92);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
 }
@@ -111,6 +113,7 @@ function logout() {
   align-items: center;
   justify-content: center;
   background: var(--color-primary);
+  color: #f6faf8;
   color: oklch(0.98 0.01 165);
   font-family: var(--font-serif);
   font-weight: 600;

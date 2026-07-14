@@ -2,36 +2,57 @@
 
 :root {
   /* 品牌色：墨绿，稳重可信 */
+  --color-primary: #1f6b56;
   --color-primary: oklch(0.42 0.09 165);
+  --color-primary-hover: #195647;
   --color-primary-hover: oklch(0.36 0.09 165);
+  --color-primary-muted: #edf4f2;
   --color-primary-muted: oklch(0.94 0.025 165);
+  --color-primary-subtle: #f6faf8;
   --color-primary-subtle: oklch(0.97 0.012 165);
 
   /* 暖中性色（带品牌色相微量染色） */
+  --color-bg: #f7f5f0;
   --color-bg: oklch(0.98 0.008 85);
+  --color-surface: #fdfcf9;
   --color-surface: oklch(0.995 0.005 85);
+  --color-surface-raised: #fffdfa;
   --color-surface-raised: oklch(1 0.003 85);
+  --color-border: #e8e4dc;
   --color-border: oklch(0.9 0.012 85);
+  --color-border-strong: #cec8be;
   --color-border-strong: oklch(0.82 0.015 85);
 
+  --color-text: #3d3a36;
   --color-text: oklch(0.38 0.02 85);
+  --color-text-heading: #1f1d1a;
   --color-text-heading: oklch(0.22 0.025 85);
+  --color-text-muted: #6b6560;
   --color-text-muted: oklch(0.52 0.015 85);
+  --color-text-subtle: #8a837c;
   --color-text-subtle: oklch(0.62 0.012 85);
 
   /* 语义色 */
+  --color-success: #2d7a4d;
   --color-success: oklch(0.48 0.12 145);
+  --color-success-bg: #eff9f2;
   --color-success-bg: oklch(0.95 0.03 145);
+  --color-warning: #9a641b;
   --color-warning: oklch(0.55 0.14 65);
+  --color-warning-bg: #fff7e7;
   --color-warning-bg: oklch(0.96 0.04 75);
+  --color-danger: #b3423b;
   --color-danger: oklch(0.52 0.16 25);
+  --color-danger-bg: #fff1ef;
   --color-danger-bg: oklch(0.96 0.03 25);
+  --color-neutral: #807a73;
   --color-neutral: oklch(0.55 0.01 85);
+  --color-neutral-bg: #f0ede7;
   --color-neutral-bg: oklch(0.94 0.008 85);
 
   /* 字体 */
-  --font-sans: 'Noto Sans SC', system-ui, sans-serif;
-  --font-serif: 'Noto Serif SC', Georgia, serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: Georgia, "Songti SC", "Noto Serif CJK SC", serif;
 
   /* 间距节奏 */
   --space-xs: 0.25rem;
@@ -48,8 +69,11 @@
   --radius-full: 9999px;
 
   /* 阴影 */
+  --shadow-sm: 0 1px 2px rgb(31 29 26 / 6%);
   --shadow-sm: 0 1px 2px oklch(0.2 0.02 85 / 0.06);
+  --shadow-md: 0 4px 12px rgb(31 29 26 / 8%);
   --shadow-md: 0 4px 12px oklch(0.2 0.02 85 / 0.08);
+  --shadow-lg: 0 8px 24px rgb(31 29 26 / 10%);
   --shadow-lg: 0 8px 24px oklch(0.2 0.02 85 / 0.1);
 
   /* 动效 */
@@ -81,10 +105,12 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   min-height: 100dvh;
 }
 
 #app {
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;

@@ -34,7 +34,9 @@
   --el-border-radius-small: 4px;
 
   /* 字体 */
-  --el-font-family: 'Noto Sans SC', system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: Georgia, "Songti SC", "Noto Serif CJK SC", serif;
+  --el-font-family: var(--font-sans);
 
   font-family: var(--el-font-family);
 }
@@ -60,7 +62,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: 'Noto Serif SC', Georgia, serif;
+  font-family: var(--font-serif);
   font-weight: 600;
   color: var(--wild-text-heading);
   margin: 0;
@@ -68,7 +70,7 @@ h3 {
 
 /* 表格内金额强调 */
 .cell-price {
-  font-family: 'Noto Serif SC', Georgia, serif;
+  font-family: var(--font-serif);
   font-weight: 600;
   color: var(--wild-primary);
 }
@@ -106,6 +108,7 @@ h3 {
   align-items: center;
   justify-content: center;
   padding: 24px;
+  background: #f7f5f0;
   background:
     radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.94 0.025 165 / 0.5), transparent),
     var(--wild-bg);
@@ -135,14 +138,14 @@ h3 {
   justify-content: center;
   background: var(--wild-primary);
   color: #fff;
-  font-family: 'Noto Serif SC', serif;
+  font-family: var(--font-serif);
   font-weight: 600;
   font-size: 18px;
   border-radius: 8px;
 }
 
 .login-brand__title {
-  font-family: 'Noto Serif SC', serif;
+  font-family: var(--font-serif);
   font-size: 18px;
   font-weight: 600;
   color: var(--wild-text-heading);

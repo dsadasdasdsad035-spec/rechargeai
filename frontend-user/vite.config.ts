@@ -3,10 +3,19 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
+  build: {
+    target: 'es2018',
+    cssTarget: 'safari14',
+  },
   server: {
     port: 5173,
     proxy: {
       '/api': { target: 'http://localhost:8080', changeOrigin: true },
+      '/products': { target: 'http://localhost:8080', changeOrigin: true },
+      '/articles': { target: 'http://localhost:8080', changeOrigin: true },
+      '/seo': { target: 'http://localhost:8080', changeOrigin: true },
+      '/sitemap.xml': { target: 'http://localhost:8080', changeOrigin: true },
+      '/robots.txt': { target: 'http://localhost:8080', changeOrigin: true },
     },
   },
 })
