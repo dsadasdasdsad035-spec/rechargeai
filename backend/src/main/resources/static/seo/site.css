@@ -353,7 +353,6 @@ img {
 }
 
 .card,
-.product-panel,
 .error-card {
   display: block;
   padding: var(--space-lg);
@@ -409,6 +408,7 @@ img {
 .product-card__name {
   min-width: 0;
   flex: 1;
+  margin: 0;
   overflow-wrap: anywhere;
   color: var(--color-text-heading);
   font-family: var(--font-serif);

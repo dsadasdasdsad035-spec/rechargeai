@@ -70,11 +70,14 @@ class PublicStyleContractTest {
 .andExpect(content().string(containsString("class=\"product-card__cta\"")))
 ```
 
-在产品详情断言中增加：
+产品详情同时覆盖无可选信息与完整公开信息两种产品：
 
 ```java
-.andExpect(content().string(containsString("class=\"info-list\"")))
-.andExpect(content().string(containsString("class=\"button button--block\"")))
+assertThat(withoutOptionalInformation.selectFirst(".info-card")).isNull();
+assertThat(withPublicInformation.selectFirst("section.info-card > dl.info-list")).isNotNull();
+assertThat(withPublicInformation.select("dt").eachText()).containsExactly("预计处理", "退款政策");
+assertThat(withPublicInformation.selectFirst(".notice[role='note']")).isNotNull();
+assertThat(withPublicInformation.selectFirst("a.button.button--block")).isNotNull();
 ```
 
 在文章详情断言中增加共享品牌断言：
@@ -117,7 +120,7 @@ mvn -Dtest=PublicStyleContractTest,PublicContentPageSmokeIT test
 </a>
 ```
 
-桌面导航固定为“服务”“文章”“交易记录”“登录”，分别链接 `/products`、`/articles`、`/transaction-record`、`/login`。移动端使用原生 `<details class="mobile-nav">` 与 `<summary class="menu-toggle" aria-label="打开菜单">`，内部重复相同导航链接；桌面 `.nav-links` 与移动端 `.mobile-nav` 通过媒体查询互斥显示。
+桌面导航固定为“服务”“文章”“交易记录”“登录”，分别链接 `/products`、`/articles`、`/transaction-record`、`/login`。移动端使用原生 `<details class="mobile-nav">` 与 `<summary class="menu-toggle" aria-label="主导航菜单">`，内部重复相同导航链接；桌面 `.nav-links` 与移动端 `.mobile-nav` 通过媒体查询互斥显示。
 
 - [ ] **步骤 2：迁移 Vue 设计变量**
 
@@ -170,14 +173,14 @@ mvn -Dtest=PublicStyleContractTest test
 
 ```html
 <a class="card product-card" th:href="@{/products/{id}(id=${product.id})}">
-  <span class="product-card__top">
-    <span class="product-card__name" th:text="${product.name}">产品名称</span>
+  <div class="product-card__top">
+    <h2 class="product-card__name" th:text="${product.name}">产品名称</h2>
     <span class="product-card__eta" th:if="${product.estimatedHours != null}">约 1h</span>
-  </span>
-  <span class="product-card__price">
+  </div>
+  <div class="product-card__price">
     <span class="product-card__amount">168.00 CNY</span>
     <span class="product-card__period">/ 30 天</span>
-  </span>
+  </div>
   <span class="product-card__cta">查看详情 →</span>
 </a>
 ```
@@ -186,7 +189,7 @@ mvn -Dtest=PublicStyleContractTest test
 
 - [ ] **步骤 2：重建产品详情层级**
 
-将产品名和价格放入 `.page-header`；信息卡使用 `.info-card > .info-list` 的 `dl/div/dt/dd` 结构；合规说明放入 `role="note"` 的 `.notice`；购买链接使用 `class="button button--block"` 且保持 `/checkout/{id}`。
+将产品名和价格放入 `.page-header`；信息卡使用 `.info-card > .info-list` 的 `dl/div/dt/dd` 结构，且仅在预计处理或退款政策至少一个字段非空时输出；合规说明放入 `role="note"` 的 `.notice`；购买链接使用 `class="button button--block"` 且保持 `/checkout/{id}`。
 
 - [ ] **步骤 3：实现产品专属样式**
 

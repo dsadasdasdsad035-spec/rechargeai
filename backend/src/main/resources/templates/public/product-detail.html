@@ -18,7 +18,8 @@
               th:text="|/ ${product.periodDays} 天|">/ 30 天</span>
       </p>
     </header>
-    <section class="card info-card" aria-label="产品信息">
+    <section class="card info-card" aria-label="产品信息"
+             th:if="${product.estimatedHours != null or product.refundPolicyText != null}">
       <dl class="info-list">
         <div class="info-row" th:if="${product.estimatedHours != null}">
           <dt>预计处理</dt>

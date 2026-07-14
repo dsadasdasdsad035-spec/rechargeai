@@ -64,6 +64,12 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
         String adminToken = adminLogin();
         long onShelfId = createAndShelfProduct(adminToken, "主流浏览器套餐", DEFAULT_SALE_PRICE);
         long offShelfId = createAndShelfProduct(adminToken, "下架保密套餐", DEFAULT_SALE_PRICE);
+        long detailedProductId = createAndShelfProductWithPublicInformation(
+                adminToken,
+                "完整信息套餐",
+                6,
+                "未履约可全额退款",
+                "请勿提供第三方账户密码");
 
         mockMvc.perform(post("/admin/api/products/" + offShelfId + "/shelf")
                         .header("Authorization", "Bearer " + adminToken)
@@ -88,9 +94,19 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
                 .andExpect(content().string(containsString("href=\"/checkout/" + onShelfId + "\"")))
                 .andReturn();
 
-        assertProductDetailVisualStructure(
+        assertProductDetailWithoutOptionalInformation(
                 productDetail.getResponse().getContentAsString(StandardCharsets.UTF_8),
                 onShelfId);
+
+        var detailedProduct = mockMvc.perform(get("/products/" + detailedProductId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(containsString("完整信息套餐")))
+                .andReturn();
+
+        assertProductDetailWithPublicInformation(
+                detailedProduct.getResponse().getContentAsString(StandardCharsets.UTF_8),
+                detailedProductId);
 
         assertProductNotFound(offShelfId, "下架保密套餐");
         assertProductNotFound(Long.MAX_VALUE, "下架保密套餐");
@@ -128,13 +144,60 @@ class PublicContentPageSmokeIT extends BaseSmokeIT {
         assertThat(callToAction.text()).isEqualTo("查看详情 →");
     }
 
-    private void assertProductDetailVisualStructure(String html, long productId) {
+    private void assertProductDetailWithoutOptionalInformation(String html, long productId) {
         Document document = Jsoup.parse(html);
 
-        assertThat(document.selectFirst("dl.info-list")).isNotNull();
+        assertThat(document.selectFirst(".info-card")).isNull();
         assertThat(document.selectFirst(
                 "a.button.button--block[href='/checkout/" + productId + "']"))
                 .isNotNull();
+    }
+
+    private void assertProductDetailWithPublicInformation(String html, long productId) {
+        Document document = Jsoup.parse(html);
+        Element infoList = document.selectFirst("section.info-card > dl.info-list");
+        Element notice = document.selectFirst(".notice[role='note']");
+
+        assertThat(infoList).isNotNull();
+        assertThat(infoList.select("dt").eachText()).containsExactly("预计处理", "退款政策");
+        assertThat(infoList.select("dd").eachText())
+                .containsExactly("约 6 小时", "未履约可全额退款");
+        assertThat(notice).isNotNull();
+        assertThat(notice.text()).isEqualTo("请勿提供第三方账户密码");
+        assertThat(document.selectFirst(
+                "a.button.button--block[href='/checkout/" + productId + "']"))
+                .isNotNull();
+    }
+
+    private long createAndShelfProductWithPublicInformation(
+            String adminToken,
+            String name,
+            int estimatedHours,
+            String refundPolicyText,
+            String complianceNotice) throws Exception {
+        var create = mockMvc.perform(post("/admin/api/products")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "name", name,
+                                "salePrice", DEFAULT_SALE_PRICE,
+                                "periodDays", 30,
+                                "currency", "CNY",
+                                "serviceType", "GENERAL",
+                                "estimatedHours", estimatedHours,
+                                "refundPolicyText", refundPolicyText,
+                                "complianceNotice", complianceNotice))))
+                .andExpect(status().isOk())
+                .andReturn();
+        long productId = objectMapper.readTree(create.getResponse().getContentAsString())
+                .path("data").path("id").asLong();
+
+        mockMvc.perform(post("/admin/api/products/" + productId + "/shelf")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"ON_SHELF\"}"))
+                .andExpect(status().isOk());
+        return productId;
     }
 
     private long createDraftArticle(

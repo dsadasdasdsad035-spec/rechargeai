@@ -13,19 +13,19 @@
   <section class="product-grid" aria-label="产品列表" th:if="${!products.isEmpty()}">
     <a class="card product-card" th:each="product : ${products}"
        th:href="@{/products/{id}(id=${product.id})}">
-      <span class="product-card__top">
-        <span class="product-card__name" th:text="${product.name}">产品名称</span>
+      <div class="product-card__top">
+        <h2 class="product-card__name" th:text="${product.name}">产品名称</h2>
         <span class="product-card__eta" th:if="${product.estimatedHours != null}"
               th:text="|约 ${product.estimatedHours}h|">约 1h</span>
-      </span>
-      <span class="product-card__price">
+      </div>
+      <div class="product-card__price">
         <span class="product-card__amount">
           <span th:text="${product.salePrice}">0.00</span>
           <span th:text="${product.currency}">CNY</span>
         </span>
         <span class="product-card__period" th:if="${product.periodDays != null}"
               th:text="|/ ${product.periodDays} 天|">/ 30 天</span>
-      </span>
+      </div>
       <span class="product-card__cta">查看详情 →</span>
     </a>
   </section>
