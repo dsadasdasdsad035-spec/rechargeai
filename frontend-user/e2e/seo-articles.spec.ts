@@ -1,4 +1,34 @@
-import { expect, test, type Page } from '@playwright/test'
+import {
+  expect,
+  test,
+  type APIRequestContext,
+  type Page,
+  type TestInfo,
+} from '@playwright/test'
+
+function assertWriteTargetIsAllowed(testInfo: TestInfo) {
+  const baseURL = testInfo.project.use.baseURL
+  if (!baseURL) {
+    throw new Error('写入型 E2E 缺少 baseURL，已拒绝执行。')
+  }
+
+  const hostname = new URL(baseURL).hostname
+  const isLocalTarget = hostname === 'localhost' || hostname === '127.0.0.1'
+  if (!isLocalTarget && process.env.E2E_ALLOW_REMOTE_WRITES !== 'true') {
+    throw new Error(
+      `写入型 E2E 已拒绝访问远程主机 ${hostname}；如确认是隔离测试环境，请显式设置 E2E_ALLOW_REMOTE_WRITES=true。`,
+    )
+  }
+}
+
+function expectConfiguredBrowser(projectName: string, browserName: string | undefined) {
+  const expectedBrowserName = projectName === 'firefox'
+    ? 'firefox'
+    : projectName === 'webkit'
+      ? 'webkit'
+      : 'chromium'
+  expect(browserName).toBe(expectedBrowserName)
+}
 
 async function expectNoHorizontalOverflow(page: Page) {
   const hasNoHorizontalOverflow = await page.evaluate(
@@ -18,18 +48,62 @@ async function expectResponsiveNavigation(page: Page, projectName: string) {
     for (const linkName of ['服务', '文章', '交易记录', '登录']) {
       await expect(mobilePanel.getByRole('link', { name: linkName, exact: true })).toBeVisible()
     }
+    await expectNoHorizontalOverflow(page)
     return
   }
 
   await expect(page.locator('.nav-links')).toBeVisible()
 }
 
-test('文章发布后可抓取，撤回后返回真实 404', async ({ page, request }, testInfo) => {
+async function cleanupArticle(
+  request: APIRequestContext,
+  articleId: number,
+  authorization: { Authorization: string },
+  needsWithdraw: boolean,
+) {
+  const cleanupErrors: string[] = []
+
+  if (needsWithdraw) {
+    try {
+      const withdrawResponse = await request.post(`/admin/api/articles/${articleId}/withdraw`, {
+        headers: authorization,
+      })
+      if (!withdrawResponse.ok()) {
+        cleanupErrors.push(`撤回文章失败：HTTP ${withdrawResponse.status()}`)
+      }
+    } catch (error) {
+      cleanupErrors.push(`撤回文章异常：${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  try {
+    const deleteResponse = await request.delete(`/admin/api/articles/${articleId}`, {
+      headers: authorization,
+    })
+    if (!deleteResponse.ok()) {
+      cleanupErrors.push(`删除文章失败：HTTP ${deleteResponse.status()}`)
+    }
+  } catch (error) {
+    cleanupErrors.push(`删除文章异常：${error instanceof Error ? error.message : String(error)}`)
+  }
+
+  if (cleanupErrors.length > 0) {
+    throw new Error(`文章清理失败：\n- ${cleanupErrors.join('\n- ')}`)
+  }
+}
+
+test('文章发布后可抓取，撤回后返回真实 404', async ({ page, request, browserName }, testInfo) => {
+  assertWriteTargetIsAllowed(testInfo)
+  expectConfiguredBrowser(testInfo.project.name, browserName)
+
   const username = process.env.E2E_ADMIN_USER ?? 'admin'
   const password = process.env.E2E_ADMIN_PASS ?? 'changeme'
   const unique = `${testInfo.project.name}-${Date.now()}`
   const slug = `seo-${unique}`
   const title = `跨浏览器 SEO 验收 ${unique}`
+  const longUnbrokenText = `LONG_UNBROKEN_${'x'.repeat(320)}`
+  const longCodeLine = `const longToken = '${'y'.repeat(260)}'`
+  const wideTableCell = `宽表格_${'列'.repeat(160)}`
 
   const loginResponse = await request.post('/admin/api/auth/login', {
     data: { username, password },
@@ -40,6 +114,8 @@ test('文章发布后可抓取，撤回后返回真实 404', async ({ page, requ
   const authorization = { Authorization: `Bearer ${loginBody.data.accessToken}` }
 
   let articleId: number | undefined
+  let articlePublished = false
+  let articleWithdrawn = false
   try {
     const createResponse = await request.post('/admin/api/articles', {
       headers: authorization,
@@ -47,7 +123,21 @@ test('文章发布后可抓取，撤回后返回真实 404', async ({ page, requ
         title,
         slug,
         summary: '验证服务端渲染、规范链接与结构化数据。',
-        contentMarkdown: `# ${title}\n\n这是无需执行 JavaScript 即可读取的正文。`,
+        contentMarkdown: [
+          `# ${title}`,
+          '',
+          '这是无需执行 JavaScript 即可读取的正文。',
+          '',
+          longUnbrokenText,
+          '',
+          '```ts',
+          longCodeLine,
+          '```',
+          '',
+          '| 项目 | 内容 |',
+          '| --- | --- |',
+          `| 宽表格 | ${wideTableCell} |`,
+        ].join('\n'),
         seoTitle: '',
         seoDescription: '',
       },
@@ -61,6 +151,13 @@ test('文章发布后可抓取，撤回后返回真实 404', async ({ page, requ
       headers: authorization,
     })
     expect(publishResponse.ok()).toBeTruthy()
+    articlePublished = true
+
+    const articleListResponse = await page.goto('/articles')
+    expect(articleListResponse?.status()).toBe(200)
+    await expectNoHorizontalOverflow(page)
+    await expectResponsiveNavigation(page, testInfo.project.name)
+    await expect(page.locator('.article-card').filter({ hasText: title })).toBeVisible()
 
     const articleResponse = await page.goto(`/articles/${slug}`)
     expect(articleResponse?.status()).toBe(200)
@@ -77,6 +174,10 @@ test('文章发布后可抓取，撤回后返回真实 404', async ({ page, requ
     expect(articleHeadingFontSize).toBeLessThanOrEqual(36)
     await expect(page.getByRole('heading', { name: title, exact: true }).first()).toBeVisible()
     await expect(page.getByText('这是无需执行 JavaScript 即可读取的正文。')).toBeVisible()
+    await expect(page.getByText(longUnbrokenText, { exact: true })).toBeVisible()
+    await expect(page.locator('.article-body pre').filter({ hasText: longCodeLine })).toBeVisible()
+    await expect(page.locator('.article-body table').filter({ hasText: wideTableCell })).toBeVisible()
+    await expectNoHorizontalOverflow(page)
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       'href',
       `https://rechargeai.cn/articles/${slug}`,
@@ -98,11 +199,21 @@ test('文章发布后可抓取，撤回后返回真实 404', async ({ page, requ
     await expect(firstProductCard).toHaveAttribute('href', /^\/products\//)
     await expect(firstProductCard.locator('.product-card__cta')).toHaveText('查看详情 →')
     await expect(page.locator('.logo__mark')).toHaveText('R')
+    const firstProductHref = await firstProductCard.getAttribute('href')
+    expect(firstProductHref).not.toBeNull()
+
+    const productDetailResponse = await page.goto(firstProductHref!)
+    expect(productDetailResponse?.status()).toBe(200)
+    await expectNoHorizontalOverflow(page)
+    await expectResponsiveNavigation(page, testInfo.project.name)
+    await expect(page.locator('.product-detail')).toBeVisible()
+    await expect(page.getByRole('link', { name: '立即订购', exact: true })).toBeVisible()
 
     const withdrawResponse = await request.post(`/admin/api/articles/${articleId}/withdraw`, {
       headers: authorization,
     })
     expect(withdrawResponse.ok()).toBeTruthy()
+    articleWithdrawn = true
 
     const missingResponse = await page.goto(`/articles/${slug}`)
     expect(missingResponse?.status()).toBe(404)
@@ -115,12 +226,12 @@ test('文章发布后可抓取，撤回后返回真实 404', async ({ page, requ
     await expect(errorCard.getByRole('link', { name: '返回产品列表', exact: true })).toBeVisible()
   } finally {
     if (articleId !== undefined) {
-      await request.post(`/admin/api/articles/${articleId}/withdraw`, {
-        headers: authorization,
-      }).catch(() => undefined)
-      await request.delete(`/admin/api/articles/${articleId}`, {
-        headers: authorization,
-      }).catch(() => undefined)
+      await cleanupArticle(
+        request,
+        articleId,
+        authorization,
+        articlePublished && !articleWithdrawn,
+      )
     }
   }
 })

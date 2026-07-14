@@ -283,7 +283,7 @@ expect(productTitleSize).toBeLessThanOrEqual(28)
 `playwright.config.ts` 的 `projects` 增加：
 
 ```ts
-{ name: 'mobile-chromium', use: { ...devices['iPhone 13'] } },
+{ name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
 ```
 
 现有 Chromium、Firefox、WebKit 项目保持不变。
