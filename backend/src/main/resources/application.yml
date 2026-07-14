@@ -84,6 +84,9 @@ wildai:
   article:
     upload-dir: ${WILDAI_ARTICLE_UPLOAD_DIR:./uploads/article}
     max-image-bytes: ${WILDAI_ARTICLE_MAX_IMAGE_BYTES:5242880}
+  seo:
+    base-url: ${WILDAI_SEO_BASE_URL:https://rechargeai.cn}
+    site-name: ${WILDAI_SEO_SITE_NAME:RechargeAi}
 
 logging:
   level:

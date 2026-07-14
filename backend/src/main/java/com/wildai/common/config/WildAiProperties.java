@@ -15,6 +15,7 @@ public class WildAiProperties {
     private Finance finance = new Finance();
     private Tutorial tutorial = new Tutorial();
     private Article article = new Article();
+    private Seo seo = new Seo();
 
     public Jwt getJwt() { return jwt; }
     public void setJwt(Jwt jwt) { this.jwt = jwt; }
@@ -32,6 +33,8 @@ public class WildAiProperties {
     public void setTutorial(Tutorial tutorial) { this.tutorial = tutorial; }
     public Article getArticle() { return article; }
     public void setArticle(Article article) { this.article = article; }
+    public Seo getSeo() { return seo; }
+    public void setSeo(Seo seo) { this.seo = seo; }
 
     public static class Jwt {
         private String secret;
@@ -146,5 +149,15 @@ public class WildAiProperties {
         public void setUploadDir(String uploadDir) { this.uploadDir = uploadDir; }
         public long getMaxImageBytes() { return maxImageBytes; }
         public void setMaxImageBytes(long maxImageBytes) { this.maxImageBytes = maxImageBytes; }
+    }
+
+    public static class Seo {
+        private String baseUrl = "https://rechargeai.cn";
+        private String siteName = "RechargeAi";
+
+        public String getBaseUrl() { return baseUrl; }
+        public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
+        public String getSiteName() { return siteName; }
+        public void setSiteName(String siteName) { this.siteName = siteName; }
     }
 }
