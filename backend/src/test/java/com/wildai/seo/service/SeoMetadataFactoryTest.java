@@ -151,6 +151,18 @@ class SeoMetadataFactoryTest {
     }
 
     @Test
+    void keepsBaseUrlSubpathWhenResolvingDirectoryRelativeArticleImage() {
+        var metadata = factory("https://example.com/app/", SITE_NAME).forArticle(article(
+                "标题", "safe-slug", "摘要", "images/a.png", null, null));
+        var rootRelative = factory("https://example.com/app/", SITE_NAME).forArticle(article(
+                "标题", "root-relative", "摘要", "/api/article-assets/a.png", null, null));
+
+        assertThat(metadata.canonical()).isEqualTo("https://example.com/app/articles/safe-slug");
+        assertThat(metadata.imageUrl()).isEqualTo("https://example.com/app/images/a.png");
+        assertThat(rootRelative.imageUrl()).isEqualTo("https://example.com/api/article-assets/a.png");
+    }
+
+    @Test
     void ignoresUnsafeOrMissingArticleImagesWithoutInventingFallback() throws Exception {
         for (String unsafe : List.of(
                 "javascript:alert(1)",
@@ -224,6 +236,51 @@ class SeoMetadataFactoryTest {
         var productNode = graphNode(objectMapper.readTree(metadata.jsonLd()), "Product");
         assertThat(productNode.path("offers").path("availability").asText())
                 .isEqualTo("https://schema.org/OutOfStock");
+    }
+
+    @Test
+    void rejectsNonPositiveProductSalePrice() {
+        for (String salePrice : List.of("0", "-0.01")) {
+            assertThatThrownBy(() -> factory().forProduct(
+                    product(43L, "无效价格产品", "OTHER", salePrice, "CNY", "ON_SHELF")))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("售价必须大于 0");
+        }
+    }
+
+    @Test
+    void rejectsNonIso4217ProductCurrency() {
+        assertThatThrownBy(() -> factory().forProduct(
+                product(43L, "无效币种产品", "OTHER", "9.90", "INVALID", "ON_SHELF")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("币种必须为 ISO 4217 三字母代码");
+    }
+
+    @Test
+    void rejectsUnknownProductStatus() {
+        assertThatThrownBy(() -> factory().forProduct(
+                product(43L, "无效状态产品", "OTHER", "9.90", "CNY", "UNKNOWN")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("产品状态无效");
+    }
+
+    @Test
+    void productListUsesTheSameOfferValidation() {
+        var invalidProduct = product(43L, "无效列表产品", "OTHER", "0", "CNY", "ON_SHELF");
+
+        assertThatThrownBy(() -> factory().forProductList(List.of(invalidProduct)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("售价必须大于 0");
+    }
+
+    @Test
+    void normalizesProductCurrencyInOfferAndDescription() throws Exception {
+        var metadata = factory().forProduct(
+                product(43L, "美元产品", "OTHER", "9.90", " usd ", "ON_SHELF"));
+
+        var productNode = graphNode(objectMapper.readTree(metadata.jsonLd()), "Product");
+        assertThat(productNode.path("offers").path("priceCurrency").asText()).isEqualTo("USD");
+        assertThat(metadata.description()).contains("9.90 USD").doesNotContain("usd");
     }
 
     @Test

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -39,7 +40,7 @@ public class SeoMetadataFactory {
             throw new IllegalArgumentException("结构化数据服务不能为空");
         }
         this.baseUrl = normalizeBaseUrl(properties.getSeo().getBaseUrl());
-        this.baseUri = URI.create(this.baseUrl);
+        this.baseUri = URI.create(this.baseUrl + "/");
         this.siteName = requireText(properties.getSeo().getSiteName(), "SEO 站点名称不能为空");
         this.structuredDataService = structuredDataService;
     }
@@ -82,13 +83,15 @@ public class SeoMetadataFactory {
     public SeoMetadata forProduct(ProductDetailDto product) {
         requireProduct(product);
         String canonical = productUrl(product.id());
-        String description = productDescription(product);
+        String currency = normalizeCurrency(product.currency());
+        String status = normalizeProductStatus(product.status());
+        String description = productDescription(product, currency);
 
         var offer = new LinkedHashMap<String, Object>();
         offer.put("@type", "Offer");
         offer.put("price", product.salePrice());
-        offer.put("priceCurrency", requireText(product.currency(), "产品币种不能为空"));
-        offer.put("availability", "ON_SHELF".equals(product.status())
+        offer.put("priceCurrency", currency);
+        offer.put("availability", "ON_SHELF".equals(status)
                 ? "https://schema.org/InStock"
                 : "https://schema.org/OutOfStock");
 
@@ -238,7 +241,7 @@ public class SeoMetadataFactory {
         return title + suffix;
     }
 
-    private String productDescription(ProductDetailDto product) {
+    private String productDescription(ProductDetailDto product, String currency) {
         var parts = new ArrayList<String>();
         parts.add(requireText(product.name(), "产品名称不能为空"));
         if (!isBlank(product.serviceType())) {
@@ -248,7 +251,7 @@ public class SeoMetadataFactory {
             parts.add("服务周期：" + product.periodDays() + " 天");
         }
         parts.add("价格：" + product.salePrice().toPlainString() + " "
-                + requireText(product.currency(), "产品币种不能为空"));
+                + currency);
         return description(String.join("，", parts));
     }
 
@@ -335,7 +338,32 @@ public class SeoMetadataFactory {
         if (product.salePrice() == null) {
             throw new IllegalArgumentException("产品售价不能为空");
         }
-        requireText(product.currency(), "产品币种不能为空");
+        if (product.salePrice().signum() <= 0) {
+            throw new IllegalArgumentException("售价必须大于 0");
+        }
+        normalizeCurrency(product.currency());
+        normalizeProductStatus(product.status());
+    }
+
+    private String normalizeCurrency(String value) {
+        String currency = isBlank(value) ? "" : value.trim().toUpperCase(Locale.ROOT);
+        if (currency.length() != 3) {
+            throw new IllegalArgumentException("币种必须为 ISO 4217 三字母代码");
+        }
+        try {
+            Currency.getInstance(currency);
+            return currency;
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("币种必须为 ISO 4217 三字母代码", ex);
+        }
+    }
+
+    private String normalizeProductStatus(String value) {
+        String status = isBlank(value) ? "" : value.trim();
+        if (!"ON_SHELF".equals(status) && !"OFF_SHELF".equals(status)) {
+            throw new IllegalArgumentException("产品状态无效");
+        }
+        return status;
     }
 
     private static String normalizeBaseUrl(String value) {

@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Currency;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -79,10 +81,8 @@ public class ProductService {
         if (product.getName() == null || product.getName().isBlank()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "请填写产品名称");
         }
-        if (product.getSalePrice() == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "请填写售价");
-        }
         product.setId(null);
+        normalizeAndValidateOffer(product);
         if (product.getProductCode() == null || product.getProductCode().isBlank()) {
             product.setProductCode(generateUniqueProductCode(product.getName()));
         } else if (productRepo.existsByProductCode(product.getProductCode())) {
@@ -93,12 +93,6 @@ public class ProductService {
         }
         if (product.getRequiredFieldsJson() == null || product.getRequiredFieldsJson().isBlank()) {
             product.setRequiredFieldsJson(DEFAULT_REQUIRED_FIELDS_JSON);
-        }
-        if (product.getStatus() == null || product.getStatus().isBlank()) {
-            product.setStatus("OFF_SHELF");
-        }
-        if (product.getCurrency() == null || product.getCurrency().isBlank()) {
-            product.setCurrency("CNY");
         }
         if (product.getPeriodDays() == null) {
             product.setPeriodDays(30);
@@ -114,8 +108,45 @@ public class ProductService {
 
     @Transactional
     public AiServiceProduct save(AiServiceProduct product) {
+        normalizeAndValidateOffer(product);
         product.setUpdatedAt(Instant.now());
         return productRepo.save(product);
+    }
+
+    private void normalizeAndValidateOffer(AiServiceProduct product) {
+        if (product.getSalePrice() == null) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "请填写售价");
+        }
+        if (product.getSalePrice().signum() <= 0) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "售价必须大于 0");
+        }
+
+        String currency = product.getCurrency();
+        if (currency == null || currency.isBlank()) {
+            currency = "CNY";
+        } else {
+            currency = currency.trim().toUpperCase(Locale.ROOT);
+        }
+        if (currency.length() != 3) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "币种必须为 ISO 4217 三字母代码");
+        }
+        try {
+            Currency.getInstance(currency);
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "币种必须为 ISO 4217 三字母代码");
+        }
+        product.setCurrency(currency);
+
+        String status = product.getStatus();
+        if (status == null || status.isBlank()) {
+            status = "OFF_SHELF";
+        } else {
+            status = status.trim();
+        }
+        if (!"ON_SHELF".equals(status) && !"OFF_SHELF".equals(status)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "产品状态无效");
+        }
+        product.setStatus(status);
     }
 
     private String generateUniqueProductCode(String name) {
