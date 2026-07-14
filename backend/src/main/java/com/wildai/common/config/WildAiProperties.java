@@ -14,6 +14,7 @@ public class WildAiProperties {
     private Payment payment = new Payment();
     private Finance finance = new Finance();
     private Tutorial tutorial = new Tutorial();
+    private Article article = new Article();
 
     public Jwt getJwt() { return jwt; }
     public void setJwt(Jwt jwt) { this.jwt = jwt; }
@@ -29,6 +30,8 @@ public class WildAiProperties {
     public void setFinance(Finance finance) { this.finance = finance; }
     public Tutorial getTutorial() { return tutorial; }
     public void setTutorial(Tutorial tutorial) { this.tutorial = tutorial; }
+    public Article getArticle() { return article; }
+    public void setArticle(Article article) { this.article = article; }
 
     public static class Jwt {
         private String secret;
@@ -133,5 +136,15 @@ public class WildAiProperties {
         public void setMaxImageBytes(long maxImageBytes) { this.maxImageBytes = maxImageBytes; }
         public long getMaxVideoBytes() { return maxVideoBytes; }
         public void setMaxVideoBytes(long maxVideoBytes) { this.maxVideoBytes = maxVideoBytes; }
+    }
+
+    public static class Article {
+        private String uploadDir = "./uploads/article";
+        private long maxImageBytes = 5 * 1024 * 1024;
+
+        public String getUploadDir() { return uploadDir; }
+        public void setUploadDir(String uploadDir) { this.uploadDir = uploadDir; }
+        public long getMaxImageBytes() { return maxImageBytes; }
+        public void setMaxImageBytes(long maxImageBytes) { this.maxImageBytes = maxImageBytes; }
     }
 }

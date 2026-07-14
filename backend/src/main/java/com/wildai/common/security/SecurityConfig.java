@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tutorial-assets/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/article-assets/**").permitAll()
                         .requestMatchers("/api/payments/*/notify").permitAll()
                         .requestMatchers("/ws/support").permitAll()
                         .requestMatchers("/admin/api/auth/login").permitAll()

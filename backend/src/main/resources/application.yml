@@ -81,6 +81,9 @@ wildai:
     upload-dir: ${WILDAI_TUTORIAL_UPLOAD_DIR:./uploads/tutorial}
     max-image-bytes: ${WILDAI_TUTORIAL_MAX_IMAGE_BYTES:5242880}
     max-video-bytes: ${WILDAI_TUTORIAL_MAX_VIDEO_BYTES:52428800}
+  article:
+    upload-dir: ${WILDAI_ARTICLE_UPLOAD_DIR:./uploads/article}
+    max-image-bytes: ${WILDAI_ARTICLE_MAX_IMAGE_BYTES:5242880}
 
 logging:
   level:

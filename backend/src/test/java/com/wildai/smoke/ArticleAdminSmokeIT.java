@@ -1,10 +1,19 @@
 package com.wildai.smoke;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -12,12 +21,39 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ArticleAdminSmokeIT extends BaseSmokeIT {
+
+    private static final Path ARTICLE_UPLOAD_DIR = Path.of(
+            System.getProperty("java.io.tmpdir"), "wildai-article-assets-" + UUID.randomUUID());
+
+    @DynamicPropertySource
+    static void articleAssetProperties(DynamicPropertyRegistry registry) {
+        registry.add("wildai.article.upload-dir", ARTICLE_UPLOAD_DIR::toString);
+    }
+
+    @AfterAll
+    static void cleanArticleUploadDir() throws IOException {
+        if (!Files.exists(ARTICLE_UPLOAD_DIR)) {
+            return;
+        }
+        try (var paths = Files.walk(ARTICLE_UPLOAD_DIR)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException exception) {
+                    throw new IllegalStateException("清理文章图片测试目录失败", exception);
+                }
+            });
+        }
+    }
 
     @Test
     void articleManagementCompletesFullLifecycle() throws Exception {
@@ -106,6 +142,55 @@ class ArticleAdminSmokeIT extends BaseSmokeIT {
                         .content(articleJson("SEO 指南", "unauthorized-seo", "# SEO 指南")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("401"));
+    }
+
+    @Test
+    void articleAssetUploadEnforcesContentPermissionAndServesPublicImage() throws Exception {
+        byte[] png = new byte[] {
+                (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00
+        };
+
+        mockMvc.perform(multipart("/admin/api/article-assets")
+                        .file("file", png))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("401"));
+
+        String username = "asset-audit-" + System.currentTimeMillis();
+        String password = "Audit123456";
+        String superToken = adminLogin();
+        AdminSession auditAdmin = createSuperAdmin(username, password);
+        mockMvc.perform(put("/admin/api/admins/" + auditAdmin.adminId() + "/roles")
+                        .header("Authorization", "Bearer " + superToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"roleCodes\":[\"AUDIT_READONLY\"]}"))
+                .andExpect(status().isOk());
+
+        String auditToken = adminLogin(username, password);
+        mockMvc.perform(multipart("/admin/api/article-assets")
+                        .file("file", png)
+                        .header("Authorization", "Bearer " + auditToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("403"))
+                .andExpect(jsonPath("$.message").value("无权管理文章内容"));
+
+        var uploadResult = mockMvc.perform(multipart("/admin/api/article-assets")
+                        .file(new MockMultipartFile("file", "cover.png", "image/png", png))
+                        .header("Authorization", "Bearer " + superToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.data.storedName").value(
+                        org.hamcrest.Matchers.matchesPattern("[0-9a-f]{32}\\.png")))
+                .andExpect(jsonPath("$.data.contentType").value("image/png"))
+                .andReturn();
+
+        String url = objectMapper.readTree(uploadResult.getResponse().getContentAsString())
+                .path("data").path("url").asText();
+        mockMvc.perform(get(url))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_PNG))
+                .andExpect(content().bytes(png))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("Cache-Control", containsString("max-age=2592000")));
     }
 
     @Test
