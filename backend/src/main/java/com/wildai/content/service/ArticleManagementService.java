@@ -1,5 +1,7 @@
 package com.wildai.content.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wildai.admin.service.AuditLogService;
 import com.wildai.common.dto.PageResult;
 import com.wildai.common.exception.BusinessException;
@@ -10,9 +12,12 @@ import com.wildai.content.dto.ArticleDetailDto;
 import com.wildai.content.dto.ArticleSaveRequest;
 import com.wildai.content.dto.ArticleSummaryDto;
 import com.wildai.content.dto.RenderedArticleContent;
+import com.wildai.content.repository.ArticleListProjection;
 import com.wildai.content.repository.ArticleRepository;
 import com.wildai.seo.service.SitemapVersion;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +32,7 @@ import java.util.regex.Pattern;
 public class ArticleManagementService {
 
     private static final Pattern SLUG_PATTERN = Pattern.compile("[a-z0-9]+(?:-[a-z0-9]+)*");
+    private static final ObjectMapper AUDIT_OBJECT_MAPPER = new ObjectMapper();
 
     private final ArticleRepository repository;
     private final ArticleMarkdownService markdownService;
@@ -85,7 +91,7 @@ public class ArticleManagementService {
                 article = repository.saveAndFlush(article);
             }
         } catch (DataIntegrityViolationException exception) {
-            throw slugConflict();
+            throw translateDataIntegrityViolation(exception);
         }
 
         auditLogService.log(
@@ -119,8 +125,10 @@ public class ArticleManagementService {
 
         try {
             article = repository.saveAndFlush(article);
+        } catch (OptimisticLockingFailureException exception) {
+            throw optimisticConflict();
         } catch (DataIntegrityViolationException exception) {
-            throw slugConflict();
+            throw translateDataIntegrityViolation(exception);
         }
 
         auditLogService.log(
@@ -152,7 +160,12 @@ public class ArticleManagementService {
             article.setPublishedAt(now);
         }
         article.setUpdatedAt(now);
-        article = repository.save(article);
+        try {
+            article = repository.save(article);
+            repository.flush();
+        } catch (OptimisticLockingFailureException exception) {
+            throw optimisticConflict();
+        }
 
         auditLogService.log(
                 operatorId, "ARTICLE_PUBLISH", "ARTICLE", String.valueOf(article.getId()),
@@ -171,7 +184,12 @@ public class ArticleManagementService {
         String before = snapshot(article);
         article.setStatus(ArticleStatus.DRAFT);
         article.setUpdatedAt(Instant.now());
-        article = repository.save(article);
+        try {
+            article = repository.save(article);
+            repository.flush();
+        } catch (OptimisticLockingFailureException exception) {
+            throw optimisticConflict();
+        }
 
         auditLogService.log(
                 operatorId, "ARTICLE_WITHDRAW", "ARTICLE", String.valueOf(article.getId()),
@@ -188,7 +206,12 @@ public class ArticleManagementService {
         }
 
         String before = snapshot(article);
-        repository.delete(article);
+        try {
+            repository.delete(article);
+            repository.flush();
+        } catch (OptimisticLockingFailureException exception) {
+            throw optimisticConflict();
+        }
         auditLogService.log(
                 operatorId, "ARTICLE_DELETE", "ARTICLE", String.valueOf(article.getId()),
                 before, null, "删除文章");
@@ -231,7 +254,30 @@ public class ArticleManagementService {
         return new BusinessException(ErrorCode.CONFLICT, "链接标识已存在");
     }
 
-    private ArticleSummaryDto toSummary(Article article) {
+    private RuntimeException translateDataIntegrityViolation(DataIntegrityViolationException exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (containsSlugConstraint(cause.getMessage())) {
+                return slugConflict();
+            }
+            if (cause instanceof ConstraintViolationException constraintViolation
+                    && containsSlugConstraint(constraintViolation.getConstraintName())) {
+                return slugConflict();
+            }
+        }
+        return exception;
+    }
+
+    private boolean containsSlugConstraint(String value) {
+        return value != null
+                && value.toLowerCase(Locale.ROOT).contains("uk_content_article_slug");
+    }
+
+    private BusinessException optimisticConflict() {
+        return new BusinessException(
+                ErrorCode.CONFLICT, "文章已被其他管理员修改，请刷新后重试");
+    }
+
+    private ArticleSummaryDto toSummary(ArticleListProjection article) {
         return new ArticleSummaryDto(
                 article.getId(),
                 article.getTitle(),
@@ -262,19 +308,14 @@ public class ArticleManagementService {
     }
 
     private String snapshot(Article article) {
-        return "{\"title\":\"" + escapeJson(article.getTitle())
-                + "\",\"slug\":\"" + escapeJson(article.getSlug())
-                + "\",\"status\":\"" + article.getStatus() + "\"}";
+        try {
+            return AUDIT_OBJECT_MAPPER.writeValueAsString(new ArticleAuditSnapshot(
+                    article.getTitle(), article.getSlug(), article.getStatus()));
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("文章审计快照序列化失败", exception);
+        }
     }
 
-    private String escapeJson(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\r", "\\r")
-                .replace("\n", "\\n")
-                .replace("\t", "\\t");
+    private record ArticleAuditSnapshot(String title, String slug, ArticleStatus status) {
     }
 }

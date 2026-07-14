@@ -1,17 +1,21 @@
 package com.wildai.content.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wildai.admin.service.AuditLogService;
 import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
 import com.wildai.content.domain.Article;
 import com.wildai.content.domain.ArticleStatus;
+import com.wildai.content.dto.ArticlePublicSummaryDto;
 import com.wildai.content.dto.ArticleSaveRequest;
+import com.wildai.content.repository.ArticleListProjection;
 import com.wildai.content.repository.ArticleRepository;
 import com.wildai.seo.service.SitemapVersion;
 import jakarta.validation.Validation;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -65,6 +70,29 @@ class ArticleManagementServiceTest {
                 afterCaptor.capture(),
                 eq("发布文章"));
         assertThat(beforeCaptor.getValue()).doesNotContain("绝密正文");
+        assertThat(afterCaptor.getValue()).doesNotContain("绝密正文");
+    }
+
+    @Test
+    void auditSnapshotEscapesControlCharactersAndContainsOnlyMetadata() throws Exception {
+        Article article = article(7L, "seo-guide", ArticleStatus.DRAFT, null);
+        article.setTitle("标题\b\f\u0001");
+        article.setContentMarkdown("绝密正文");
+        when(repository.findById(7L)).thenReturn(Optional.of(article));
+        when(repository.save(any(Article.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.publish(9L, 7L);
+
+        ArgumentCaptor<String> afterCaptor = ArgumentCaptor.forClass(String.class);
+        verify(auditLogService).log(
+                eq(9L), eq("ARTICLE_PUBLISH"), eq("ARTICLE"), eq("7"),
+                any(String.class), afterCaptor.capture(), eq("发布文章"));
+        var snapshot = new ObjectMapper().readTree(afterCaptor.getValue());
+        assertThat(snapshot.size()).isEqualTo(3);
+        assertThat(snapshot.has("title")).isTrue();
+        assertThat(snapshot.has("slug")).isTrue();
+        assertThat(snapshot.has("status")).isTrue();
+        assertThat(snapshot.get("title").asText()).isEqualTo("标题\b\f\u0001");
         assertThat(afterCaptor.getValue()).doesNotContain("绝密正文");
     }
 
@@ -122,6 +150,48 @@ class ArticleManagementServiceTest {
     }
 
     @Test
+    void updateConvertsOptimisticLockFailureToConflict() {
+        Article article = article(7L, "seo-guide", ArticleStatus.DRAFT, null);
+        when(repository.findById(7L)).thenReturn(Optional.of(article));
+        when(repository.saveAndFlush(any(Article.class)))
+                .thenThrow(new ObjectOptimisticLockingFailureException(Article.class, 7L));
+
+        assertOptimisticConflict(() -> service.update(9L, 7L, request("seo-guide", "更新正文")));
+    }
+
+    @Test
+    void publishFlushesAndConvertsOptimisticLockFailureToConflict() {
+        Article article = article(7L, "seo-guide", ArticleStatus.DRAFT, null);
+        when(repository.findById(7L)).thenReturn(Optional.of(article));
+        when(repository.save(any(Article.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        doThrow(new ObjectOptimisticLockingFailureException(Article.class, 7L))
+                .when(repository).flush();
+
+        assertOptimisticConflict(() -> service.publish(9L, 7L));
+    }
+
+    @Test
+    void withdrawFlushesAndConvertsOptimisticLockFailureToConflict() {
+        Article article = article(7L, "seo-guide", ArticleStatus.PUBLISHED, Instant.now());
+        when(repository.findById(7L)).thenReturn(Optional.of(article));
+        when(repository.save(any(Article.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        doThrow(new ObjectOptimisticLockingFailureException(Article.class, 7L))
+                .when(repository).flush();
+
+        assertOptimisticConflict(() -> service.withdraw(9L, 7L));
+    }
+
+    @Test
+    void deleteFlushesAndConvertsOptimisticLockFailureToConflict() {
+        Article article = article(7L, "seo-guide", ArticleStatus.DRAFT, null);
+        when(repository.findById(7L)).thenReturn(Optional.of(article));
+        doThrow(new ObjectOptimisticLockingFailureException(Article.class, 7L))
+                .when(repository).flush();
+
+        assertOptimisticConflict(() -> service.deleteDraft(9L, 7L));
+    }
+
+    @Test
     void previewDelegatesToSafeMarkdownService() {
         String html = service.preview("正文<script>alert(1)</script>");
 
@@ -132,7 +202,8 @@ class ArticleManagementServiceTest {
     @Test
     void uniqueSlugViolationBecomesConflict() {
         when(repository.saveAndFlush(any(Article.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate slug"));
+                .thenThrow(new DataIntegrityViolationException(
+                        "Duplicate entry 'duplicate' for key 'uk_content_article_slug'"));
 
         assertThatThrownBy(() -> service.create(9L, request("duplicate", "正文")))
                 .isInstanceOfSatisfying(BusinessException.class, exception -> {
@@ -173,7 +244,8 @@ class ArticleManagementServiceTest {
                     saved.setId(7L);
                     return saved;
                 })
-                .thenThrow(new DataIntegrityViolationException("duplicate stable slug"));
+                .thenThrow(new DataIntegrityViolationException(
+                        "Duplicate entry 'article-7' for key 'uk_content_article_slug'"));
 
         assertThatThrownBy(() -> service.create(9L, request("", "正文")))
                 .isInstanceOfSatisfying(BusinessException.class, exception -> {
@@ -184,6 +256,31 @@ class ArticleManagementServiceTest {
         verify(repository, times(2)).saveAndFlush(any(Article.class));
         verify(auditLogService, never()).log(
                 any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateSlugConstraintViolationBecomesConflict() {
+        Article article = article(7L, "old-slug", ArticleStatus.DRAFT, null);
+        when(repository.findById(7L)).thenReturn(Optional.of(article));
+        when(repository.saveAndFlush(any(Article.class)))
+                .thenThrow(new DataIntegrityViolationException(
+                        "Duplicate entry 'new-slug' for key 'uk_content_article_slug'"));
+
+        assertThatThrownBy(() -> service.update(9L, 7L, request("new-slug", "正文")))
+                .isInstanceOfSatisfying(BusinessException.class, exception -> {
+                    assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONFLICT);
+                    assertThat(exception).hasMessage("链接标识已存在");
+                });
+    }
+
+    @Test
+    void nonSlugDataIntegrityViolationIsNotConverted() {
+        DataIntegrityViolationException failure = new DataIntegrityViolationException(
+                "Column 'content_html' cannot be null");
+        when(repository.saveAndFlush(any(Article.class))).thenThrow(failure);
+
+        assertThatThrownBy(() -> service.create(9L, request("valid-slug", "正文")))
+                .isSameAs(failure);
     }
 
     @Test
@@ -251,8 +348,9 @@ class ArticleManagementServiceTest {
     @Test
     void publicQueriesUsePublishedRepositoryMethods() {
         Article article = article(7L, "seo-guide", ArticleStatus.PUBLISHED, Instant.now());
+        ArticleListProjection projection = projection(article);
         when(repository.findByStatusOrderByPublishedAtDesc(eq(ArticleStatus.PUBLISHED), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(article), PageRequest.of(0, 10), 1));
+                .thenReturn(new PageImpl<>(List.of(projection), PageRequest.of(0, 10), 1));
         when(repository.findBySlugAndStatus("seo-guide", ArticleStatus.PUBLISHED))
                 .thenReturn(Optional.of(article));
 
@@ -260,10 +358,28 @@ class ArticleManagementServiceTest {
         var detail = publicQueryService.findPublished("seo-guide");
 
         assertThat(page.items()).hasSize(1);
+        ArticlePublicSummaryDto summary = page.items().getFirst();
+        assertThat(summary.slug()).isEqualTo("seo-guide");
         assertThat(detail).isPresent().get().extracting("slug").isEqualTo("seo-guide");
         verify(repository).findByStatusOrderByPublishedAtDesc(eq(ArticleStatus.PUBLISHED), any(Pageable.class));
         verify(repository).findBySlugAndStatus("seo-guide", ArticleStatus.PUBLISHED);
         verify(repository, never()).findById(any());
+    }
+
+    @Test
+    void adminSearchMapsLightweightProjection() {
+        Article article = article(7L, "seo-guide", ArticleStatus.DRAFT, null);
+        ArticleListProjection projection = projection(article);
+        when(repository.searchAdmin(eq("SEO"), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(projection), PageRequest.of(0, 10), 1));
+
+        var page = service.search(" SEO ", null, 1, 10);
+
+        assertThat(page.items()).singleElement().satisfies(summary -> {
+            assertThat(summary.id()).isEqualTo(7L);
+            assertThat(summary.slug()).isEqualTo("seo-guide");
+            assertThat(summary.status()).isEqualTo(ArticleStatus.DRAFT);
+        });
     }
 
     @Test
@@ -300,9 +416,31 @@ class ArticleManagementServiceTest {
                 markdown, "SEO 标题", "SEO 描述");
     }
 
+    private ArticleListProjection projection(Article article) {
+        ArticleListProjection projection = mock(ArticleListProjection.class);
+        when(projection.getId()).thenReturn(article.getId());
+        when(projection.getTitle()).thenReturn(article.getTitle());
+        when(projection.getSlug()).thenReturn(article.getSlug());
+        when(projection.getSummary()).thenReturn(article.getSummary());
+        when(projection.getCoverImageUrl()).thenReturn(article.getCoverImageUrl());
+        when(projection.getStatus()).thenReturn(article.getStatus());
+        when(projection.getPublishedAt()).thenReturn(article.getPublishedAt());
+        when(projection.getCreatedAt()).thenReturn(article.getCreatedAt());
+        when(projection.getUpdatedAt()).thenReturn(article.getUpdatedAt());
+        return projection;
+    }
+
     private void verifyNoRepositoryWrite() {
         verify(repository, never()).save(any(Article.class));
         verify(repository, never()).saveAndFlush(any(Article.class));
         verify(repository, never()).delete(any(Article.class));
+    }
+
+    private void assertOptimisticConflict(org.assertj.core.api.ThrowableAssert.ThrowingCallable operation) {
+        assertThatThrownBy(operation)
+                .isInstanceOfSatisfying(BusinessException.class, exception -> {
+                    assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONFLICT);
+                    assertThat(exception).hasMessage("文章已被其他管理员修改，请刷新后重试");
+                });
     }
 }

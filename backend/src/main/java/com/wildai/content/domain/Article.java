@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.time.Instant;
 
@@ -59,6 +60,10 @@ public class Article {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
@@ -85,4 +90,6 @@ public class Article {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

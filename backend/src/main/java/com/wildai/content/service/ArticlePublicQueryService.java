@@ -6,6 +6,8 @@ import com.wildai.common.exception.ErrorCode;
 import com.wildai.content.domain.Article;
 import com.wildai.content.domain.ArticleStatus;
 import com.wildai.content.dto.ArticlePublicDto;
+import com.wildai.content.dto.ArticlePublicSummaryDto;
+import com.wildai.content.repository.ArticleListProjection;
 import com.wildai.content.repository.ArticleRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,7 @@ public class ArticlePublicQueryService {
     }
 
     @Transactional(readOnly = true)
-    public PageResult<ArticlePublicDto> listPublished(int pageNo, int pageSize) {
+    public PageResult<ArticlePublicSummaryDto> listPublished(int pageNo, int pageSize) {
         validatePagination(pageNo, pageSize);
         var page = repository.findByStatusOrderByPublishedAtDesc(
                 ArticleStatus.PUBLISHED, PageRequest.of(pageNo - 1, pageSize));
@@ -31,7 +33,7 @@ public class ArticlePublicQueryService {
                 pageNo,
                 pageSize,
                 page.getTotalElements(),
-                page.getContent().stream().map(this::toPublicDto).toList());
+                page.getContent().stream().map(this::toPublicSummaryDto).toList());
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +58,17 @@ public class ArticlePublicQueryService {
                 article.getContentHtml(),
                 article.getSeoTitle(),
                 article.getSeoDescription(),
+                article.getPublishedAt(),
+                article.getUpdatedAt());
+    }
+
+    private ArticlePublicSummaryDto toPublicSummaryDto(ArticleListProjection article) {
+        return new ArticlePublicSummaryDto(
+                article.getId(),
+                article.getTitle(),
+                article.getSlug(),
+                article.getSummary(),
+                article.getCoverImageUrl(),
                 article.getPublishedAt(),
                 article.getUpdatedAt());
     }
