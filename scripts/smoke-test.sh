@@ -3,6 +3,9 @@
 set -euo pipefail
 
 BASE_URL="${SMOKE_BASE_URL:-https://rechargeai.cn}"
+BASE_URL="${BASE_URL%/}"
+CANONICAL_BASE_URL="${SMOKE_CANONICAL_BASE_URL:-https://rechargeai.cn}"
+CANONICAL_BASE_URL="${CANONICAL_BASE_URL%/}"
 API="${BASE_URL}/api"
 ADMIN_API="${BASE_URL}/admin/api"
 SSH_TARGET="${SMOKE_SSH:-root@8.218.19.217}"
@@ -101,7 +104,7 @@ if echo "${PAY_RESP}" | grep -q mockTradeNo; then
   curl -fsS -X POST "${API}/payments/mock/notify?paymentNo=${PAYMENT_NO}&tradeNo=${TRADE_NO}" >/dev/null
   echo "==> 9. 校验订单状态"
   DETAIL=$(curl -fsS "${API}/orders/${ORDER_NO}" -H "Authorization: Bearer ${TOKEN}")
-  echo "${DETAIL}" | grep -q '"orderStatus":"PAID"' || { echo "订单未支付: ${DETAIL}"; exit 1; }
+  echo "${DETAIL}" | grep -q '"orderStatus":"FULFILLING"' || { echo "订单未进入履约流程: ${DETAIL}"; exit 1; }
   echo "${DETAIL}" | grep -q '"paymentStatus":"PAID"' || { echo "支付状态异常: ${DETAIL}"; exit 1; }
 else
   PAYMENT_URL=$(echo "${PAY_RESP}" | sed -n 's/.*"paymentUrl":"\([^"]*\)".*/\1/p')
@@ -110,4 +113,48 @@ else
   echo "==> 8-9. 跳过自动支付（真实支付需扫码完成）"
 fi
 
-echo "==> 冒烟测试通过"
+ARTICLE_SLUG="smoke-seo-$(date +%s)"
+ARTICLE_TITLE="SEO 冒烟文章 $(date +%s)"
+echo "==> 10. 创建文章草稿 -> ${ARTICLE_TITLE}"
+ARTICLE_RESP=$(curl -fsS -X POST "${ADMIN_API}/articles" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d "{\"title\":\"${ARTICLE_TITLE}\",\"slug\":\"${ARTICLE_SLUG}\",\"summary\":\"线上 SEO 闭环验证\",\"contentMarkdown\":\"# ${ARTICLE_TITLE}\\n无需 JavaScript 的公开正文\",\"seoTitle\":\"\",\"seoDescription\":\"\"}")
+
+echo "${ARTICLE_RESP}" | grep -q '"code":"0"' || { echo "创建文章失败: ${ARTICLE_RESP}"; exit 1; }
+ARTICLE_ID=$(echo "${ARTICLE_RESP}" | sed -n 's/.*"id":\([0-9]*\).*/\1/p' | head -1)
+echo "    文章 ID: ${ARTICLE_ID}"
+
+echo "==> 11. 发布文章并验证首次 HTML"
+PUBLISH_RESP=$(curl -fsS -X POST "${ADMIN_API}/articles/${ARTICLE_ID}/publish" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}")
+echo "${PUBLISH_RESP}" | grep -q '"status":"PUBLISHED"' || { echo "发布文章失败: ${PUBLISH_RESP}"; exit 1; }
+
+ARTICLE_HTML=$(curl -fsS "${BASE_URL}/articles/${ARTICLE_SLUG}")
+echo "${ARTICLE_HTML}" | grep -q "${ARTICLE_TITLE}" || { echo "公开 HTML 缺少文章标题"; exit 1; }
+echo "${ARTICLE_HTML}" | grep -q "无需 JavaScript 的公开正文" || { echo "公开 HTML 缺少文章正文"; exit 1; }
+echo "${ARTICLE_HTML}" | grep -q "href=\"${CANONICAL_BASE_URL}/articles/${ARTICLE_SLUG}\"" || { echo "公开 HTML canonical 异常"; exit 1; }
+echo "    首次 HTML 包含标题、正文和 canonical"
+
+echo "==> 12. 验证 sitemap 收录文章"
+SITEMAP_XML=$(curl -fsS "${BASE_URL}/sitemap.xml")
+echo "${SITEMAP_XML}" | grep -q "/articles/${ARTICLE_SLUG}" || { echo "sitemap 未收录文章"; exit 1; }
+echo "    sitemap 已收录"
+
+echo "==> 13. 撤回文章并验证真实 404"
+WITHDRAW_RESP=$(curl -fsS -X POST "${ADMIN_API}/articles/${ARTICLE_ID}/withdraw" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}")
+echo "${WITHDRAW_RESP}" | grep -q '"status":"DRAFT"' || { echo "撤回文章失败: ${WITHDRAW_RESP}"; exit 1; }
+
+ARTICLE_404_FILE=$(mktemp)
+trap 'rm -f "${ARTICLE_404_FILE}"' EXIT
+ARTICLE_STATUS=$(curl -sS -o "${ARTICLE_404_FILE}" -w '%{http_code}' "${BASE_URL}/articles/${ARTICLE_SLUG}")
+[ "${ARTICLE_STATUS}" = "404" ] || { echo "撤回后状态码异常: ${ARTICLE_STATUS}"; exit 1; }
+grep -q "页面不存在" "${ARTICLE_404_FILE}" || { echo "撤回后的 404 页面内容异常"; exit 1; }
+
+echo "==> 14. 删除已撤回草稿"
+DELETE_RESP=$(curl -fsS -X DELETE "${ADMIN_API}/articles/${ARTICLE_ID}" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}")
+echo "${DELETE_RESP}" | grep -q '"code":"0"' || { echo "删除文章失败: ${DELETE_RESP}"; exit 1; }
+
+echo "==> 冒烟测试通过（支付与 SEO 文章闭环）"
