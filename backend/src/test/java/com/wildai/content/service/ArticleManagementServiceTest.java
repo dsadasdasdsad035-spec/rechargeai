@@ -2,10 +2,12 @@ package com.wildai.content.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wildai.admin.service.AuditLogService;
+import com.wildai.admin.service.RbacService;
 import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
 import com.wildai.content.domain.Article;
 import com.wildai.content.domain.ArticleStatus;
+import com.wildai.content.dto.ArticlePreviewRequest;
 import com.wildai.content.dto.ArticlePublicSummaryDto;
 import com.wildai.content.dto.ArticleSaveRequest;
 import com.wildai.content.repository.ArticleListProjection;
@@ -42,8 +44,9 @@ class ArticleManagementServiceTest {
     private final ArticleRepository repository = mock(ArticleRepository.class);
     private final AuditLogService auditLogService = mock(AuditLogService.class);
     private final SitemapVersion sitemapVersion = mock(SitemapVersion.class);
+    private final RbacService rbacService = mock(RbacService.class);
     private final ArticleManagementService service = new ArticleManagementService(
-            repository, new ArticleMarkdownService(), auditLogService, sitemapVersion);
+            repository, new ArticleMarkdownService(), auditLogService, sitemapVersion, rbacService);
     private final ArticlePublicQueryService publicQueryService = new ArticlePublicQueryService(repository);
 
     @Test
@@ -200,6 +203,22 @@ class ArticleManagementServiceTest {
     }
 
     @Test
+    void writeOperationsRequireContentPermissionBeforeRepositoryAccess() {
+        doThrow(new BusinessException(ErrorCode.FORBIDDEN, "无权管理文章内容"))
+                .when(rbacService).requireManageContent(9L);
+
+        assertManageContentForbidden(() -> service.create(9L, request("seo-guide", "正文")));
+        assertManageContentForbidden(() -> service.update(9L, 7L, request("seo-guide", "正文")));
+        assertManageContentForbidden(() -> service.publish(9L, 7L));
+        assertManageContentForbidden(() -> service.withdraw(9L, 7L));
+        assertManageContentForbidden(() -> service.deleteDraft(9L, 7L));
+
+        verify(rbacService, times(5)).requireManageContent(9L);
+        verifyNoRepositoryWrite();
+        verify(repository, never()).findById(any());
+    }
+
+    @Test
     void uniqueSlugViolationBecomesConflict() {
         when(repository.saveAndFlush(any(Article.class)))
                 .thenThrow(new DataIntegrityViolationException(
@@ -330,18 +349,29 @@ class ArticleManagementServiceTest {
     @Test
     void saveRequestUsesContractValidationMessages() {
         try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
-            var violations = validatorFactory.getValidator().validate(new ArticleSaveRequest(
+            var validator = validatorFactory.getValidator();
+            var violations = validator.validate(new ArticleSaveRequest(
                     "标题",
                     "slug",
                     "摘".repeat(501),
                     "图".repeat(513),
-                    "正文",
+                    "正".repeat(ArticleSaveRequest.MAX_CONTENT_MARKDOWN_LENGTH + 1),
                     "SEO 标题",
                     "SEO 描述"));
+            var previewViolations = validator.validate(new ArticlePreviewRequest(
+                    "正".repeat(ArticleSaveRequest.MAX_CONTENT_MARKDOWN_LENGTH + 1)));
+            var blankDraftViolations = validator.validate(request("blank-draft", ""));
 
             assertThat(violations)
                     .extracting(violation -> violation.getMessage())
-                    .contains("摘要不能超过 500 个字符", "封面地址不能超过 512 个字符");
+                    .contains(
+                            "摘要不能超过 500 个字符",
+                            "封面地址不能超过 512 个字符",
+                            "文章正文不能超过 200000 个字符");
+            assertThat(previewViolations)
+                    .extracting(violation -> violation.getMessage())
+                    .containsExactly("文章正文不能超过 200000 个字符");
+            assertThat(blankDraftViolations).isEmpty();
         }
     }
 
@@ -441,6 +471,14 @@ class ArticleManagementServiceTest {
                 .isInstanceOfSatisfying(BusinessException.class, exception -> {
                     assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONFLICT);
                     assertThat(exception).hasMessage("文章已被其他管理员修改，请刷新后重试");
+                });
+    }
+
+    private void assertManageContentForbidden(org.assertj.core.api.ThrowableAssert.ThrowingCallable operation) {
+        assertThatThrownBy(operation)
+                .isInstanceOfSatisfying(BusinessException.class, exception -> {
+                    assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN);
+                    assertThat(exception).hasMessage("无权管理文章内容");
                 });
     }
 }

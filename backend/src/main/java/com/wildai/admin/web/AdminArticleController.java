@@ -62,7 +62,7 @@ public class AdminArticleController {
     }
 
     @PostMapping("/preview")
-    public ApiResponse<ArticlePreviewDto> preview(@RequestBody ArticlePreviewRequest request) {
+    public ApiResponse<ArticlePreviewDto> preview(@Valid @RequestBody ArticlePreviewRequest request) {
         return ApiResponse.ok(new ArticlePreviewDto(
                 articleManagementService.preview(request.contentMarkdown())));
     }

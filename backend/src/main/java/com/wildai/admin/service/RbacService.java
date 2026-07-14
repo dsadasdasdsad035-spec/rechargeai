@@ -84,6 +84,12 @@ public class RbacService {
                 AdminRoleCode.OPS_ADMIN);
     }
 
+    public boolean canManageContent(Long adminUserId) {
+        return hasAnyRole(adminUserId,
+                AdminRoleCode.SUPER_ADMIN,
+                AdminRoleCode.OPS_ADMIN);
+    }
+
     /** 财务、超管可操作资金；只读审计仅查看 */
     public boolean canViewFinance(Long adminUserId) {
         return hasAnyRole(adminUserId,
@@ -113,6 +119,12 @@ public class RbacService {
     public void requireManageAdmins(Long adminUserId) {
         if (!canManageAdmins(adminUserId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "仅超级管理员可执行此操作");
+        }
+    }
+
+    public void requireManageContent(Long adminUserId) {
+        if (!canManageContent(adminUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权管理文章内容");
         }
     }
 

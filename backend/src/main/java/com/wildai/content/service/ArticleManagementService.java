@@ -3,6 +3,7 @@ package com.wildai.content.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wildai.admin.service.AuditLogService;
+import com.wildai.admin.service.RbacService;
 import com.wildai.common.dto.PageResult;
 import com.wildai.common.exception.BusinessException;
 import com.wildai.common.exception.ErrorCode;
@@ -38,15 +39,18 @@ public class ArticleManagementService {
     private final ArticleMarkdownService markdownService;
     private final AuditLogService auditLogService;
     private final SitemapVersion sitemapVersion;
+    private final RbacService rbacService;
 
     public ArticleManagementService(ArticleRepository repository,
                                     ArticleMarkdownService markdownService,
                                     AuditLogService auditLogService,
-                                    SitemapVersion sitemapVersion) {
+                                    SitemapVersion sitemapVersion,
+                                    RbacService rbacService) {
         this.repository = repository;
         this.markdownService = markdownService;
         this.auditLogService = auditLogService;
         this.sitemapVersion = sitemapVersion;
+        this.rbacService = rbacService;
     }
 
     @Transactional(readOnly = true)
@@ -69,6 +73,7 @@ public class ArticleManagementService {
 
     @Transactional
     public ArticleDetailDto create(Long operatorId, ArticleSaveRequest request) {
+        rbacService.requireManageContent(operatorId);
         String slug = normalizeSlug(request.slug());
         String markdown = normalizeMarkdown(request.contentMarkdown());
         RenderedArticleContent rendered = markdownService.render(markdown, request.summary());
@@ -102,6 +107,7 @@ public class ArticleManagementService {
 
     @Transactional
     public ArticleDetailDto update(Long operatorId, Long id, ArticleSaveRequest request) {
+        rbacService.requireManageContent(operatorId);
         Article article = requireArticle(id);
         String normalizedSlug = normalizeSlug(request.slug());
         String desiredSlug = normalizedSlug.isEmpty() ? "article-" + article.getId() : normalizedSlug;
@@ -142,6 +148,7 @@ public class ArticleManagementService {
 
     @Transactional
     public ArticleDetailDto publish(Long operatorId, Long id) {
+        rbacService.requireManageContent(operatorId);
         Article article = requireArticle(id);
         if (article.getStatus() != ArticleStatus.DRAFT) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "文章已发布");
@@ -176,6 +183,7 @@ public class ArticleManagementService {
 
     @Transactional
     public ArticleDetailDto withdraw(Long operatorId, Long id) {
+        rbacService.requireManageContent(operatorId);
         Article article = requireArticle(id);
         if (article.getStatus() != ArticleStatus.PUBLISHED) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "文章尚未发布");
@@ -200,6 +208,7 @@ public class ArticleManagementService {
 
     @Transactional
     public void deleteDraft(Long operatorId, Long id) {
+        rbacService.requireManageContent(operatorId);
         Article article = requireArticle(id);
         if (article.getStatus() == ArticleStatus.PUBLISHED) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "已发布文章请先撤回");
