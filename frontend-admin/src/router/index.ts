@@ -7,6 +7,7 @@ const router = createRouter({
     { path: '/login', component: () => import('../views/LoginView.vue') },
     { path: '/products', component: () => import('../views/ProductListView.vue'), meta: { auth: true } },
     { path: '/products/new', component: () => import('../views/ProductFormView.vue'), meta: { auth: true } },
+    { path: '/products/:id/edit', component: () => import('../views/ProductFormView.vue'), meta: { auth: true } },
     { path: '/service-types', component: () => import('../views/ServiceTypeGuideView.vue'), meta: { auth: true } },
     { path: '/articles', component: () => import('../views/ArticleListView.vue'), meta: { auth: true } },
     { path: '/articles/new', component: () => import('../views/ArticleEditView.vue'), meta: { auth: true } },

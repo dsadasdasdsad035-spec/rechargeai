@@ -1,42 +1,44 @@
-/* RechargeAi 管理端 — Element Plus 主题与用户端品牌对齐 */
+/* RechargeAi 管理端 — ui-ux-pro-max: Soft UI + Element Plus 主题 */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
 
 :root {
-  /* 品牌墨绿（与用户端一致） */
-  --wild-primary: #1f6b56;
-  --wild-primary-light: #edf4f2;
-  --wild-bg: #f7f5f0;
+  /* 品牌 — 与用户端对齐 */
+  --wild-primary: #2563eb;
+  --wild-primary-light: #dbeafe;
+  --wild-accent: #ea580c;
+  --wild-bg: #f8fafc;
   --wild-surface: #ffffff;
-  --wild-text: #3d3a36;
-  --wild-text-heading: #1f1d1a;
-  --wild-border: #e8e4dc;
+  --wild-text: #334155;
+  --wild-text-heading: #0f172a;
+  --wild-border: #e2e8f0;
 
-  /* Element Plus 主色覆盖 */
-  --el-color-primary: #1f6b56;
-  --el-color-primary-light-3: #5d9484;
-  --el-color-primary-light-5: #8fb5a9;
-  --el-color-primary-light-7: #c1d6ce;
-  --el-color-primary-light-8: #d9e8e3;
-  --el-color-primary-light-9: #edf4f2;
-  --el-color-primary-dark-2: #195647;
+  /* Element Plus 主色 */
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #60a5fa;
+  --el-color-primary-light-5: #93c5fd;
+  --el-color-primary-light-7: #bfdbfe;
+  --el-color-primary-light-8: #dbeafe;
+  --el-color-primary-light-9: #eff6ff;
+  --el-color-primary-dark-2: #1d4ed8;
 
-  /* 页面与组件底色 */
   --el-bg-color: #ffffff;
-  --el-bg-color-page: #f7f5f0;
-  --el-border-color: #e8e4dc;
-  --el-border-color-light: #f0ece4;
-  --el-text-color-primary: #1f1d1a;
-  --el-text-color-regular: #3d3a36;
-  --el-text-color-secondary: #6b6560;
-  --el-text-color-placeholder: #9c958d;
+  --el-bg-color-page: #f8fafc;
+  --el-border-color: #e2e8f0;
+  --el-border-color-light: #f1f5f9;
+  --el-text-color-primary: #0f172a;
+  --el-text-color-regular: #334155;
+  --el-text-color-secondary: #64748b;
+  --el-text-color-placeholder: #94a3b8;
 
-  /* 圆角 */
-  --el-border-radius-base: 6px;
-  --el-border-radius-small: 4px;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
 
-  /* 字体 */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-serif: Georgia, "Songti SC", "Noto Serif CJK SC", serif;
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
   --el-font-family: var(--font-sans);
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 5%), 0 4px 12px rgb(15 23 42 / 4%);
 
   font-family: var(--el-font-family);
 }
@@ -50,7 +52,9 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--wild-bg);
+  background:
+    radial-gradient(ellipse 80% 50% at 0% 0%, rgb(37 99 235 / 6%), transparent 50%),
+    var(--wild-bg);
   color: var(--wild-text);
   -webkit-font-smoothing: antialiased;
 }
@@ -62,20 +66,20 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-weight: 600;
   color: var(--wild-text-heading);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
-/* 表格内金额强调 */
 .cell-price {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--wild-primary);
 }
 
-/* 页面内容区 */
 .admin-page {
   padding: 0;
 }
@@ -85,12 +89,12 @@ h3 {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
 .admin-page__header-text p {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-size: 14px;
   color: var(--el-text-color-secondary);
 }
@@ -101,76 +105,91 @@ h3 {
   flex-shrink: 0;
 }
 
-/* 登录页背景 */
+/* Element Plus 卡片统一 Soft UI */
+.el-card {
+  border-radius: 12px !important;
+  border-color: var(--wild-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.el-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* 登录页 */
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: #f7f5f0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.94 0.025 165 / 0.5), transparent),
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgb(37 99 235 / 12%), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgb(234 88 12 / 6%), transparent 50%),
     var(--wild-bg);
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 8%), 0 20px 48px rgb(15 23 42 / 6%) !important;
 }
 
 .login-card :deep(.el-card__body) {
-  padding: 32px 28px;
+  padding: 36px 32px;
 }
 
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 28px;
 }
 
 .login-brand__mark {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--wild-primary);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #fff;
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 18px;
-  border-radius: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgb(37 99 235 / 35%);
 }
 
 .login-brand__title {
-  font-family: var(--font-serif);
-  font-size: 18px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
   color: var(--wild-text-heading);
 }
 
 .login-brand__sub {
   font-size: 13px;
   color: var(--el-text-color-secondary);
+  margin-top: 2px;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .login-form__field label {
   display: block;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--wild-text-heading);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-/* 详情对话框 */
 .detail-list {
   margin: 0;
   display: flex;
@@ -194,4 +213,13 @@ h3 {
   color: var(--wild-text-heading);
   text-align: right;
   word-break: break-all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

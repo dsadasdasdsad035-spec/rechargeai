@@ -124,10 +124,12 @@ onMounted(async () => {
 }
 
 .product-card__amount {
-  font-family: var(--font-serif);
-  font-size: 1.375rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--color-primary);
+  letter-spacing: -0.02em;
 }
 
 .product-card__period {
@@ -187,8 +189,9 @@ onMounted(async () => {
 }
 
 .empty__title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 1.125rem;
+  font-weight: 600;
   color: var(--color-text-heading);
   margin-bottom: var(--space-sm);
 }

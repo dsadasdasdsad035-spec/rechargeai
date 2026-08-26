@@ -27,6 +27,11 @@ public class AdminProductController {
         return ApiResponse.ok(productService.listAll());
     }
 
+    @GetMapping("/{id}")
+    public ApiResponse<AiServiceProduct> get(@PathVariable Long id) {
+        return ApiResponse.ok(productRepository.findById(id).orElseThrow());
+    }
+
     @PostMapping
     public ApiResponse<AiServiceProduct> create(@RequestBody AiServiceProduct product) {
         return ApiResponse.ok(productService.create(product));
@@ -36,6 +41,8 @@ public class AdminProductController {
     public ApiResponse<AiServiceProduct> update(@PathVariable Long id, @RequestBody AiServiceProduct product) {
         AiServiceProduct existing = productRepository.findById(id).orElseThrow();
         product.setId(existing.getId());
+        product.setProductCode(existing.getProductCode());
+        product.setCreatedAt(existing.getCreatedAt());
         return ApiResponse.ok(productService.save(product));
     }
 

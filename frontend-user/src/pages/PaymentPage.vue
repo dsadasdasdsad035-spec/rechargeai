@@ -223,10 +223,11 @@ onUnmounted(stopPolling)
   align-items: center;
   justify-content: center;
   padding: 0 var(--space-lg);
-  border-radius: var(--radius-sm);
-  background: var(--color-primary);
-  color: oklch(0.98 0.01 165);
-  font-weight: 500;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--color-accent), var(--color-accent-hover));
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgb(234 88 12 / 25%);
   text-decoration: none;
 }
 

@@ -108,7 +108,7 @@ async function submit() {
           />
           <p class="hint" role="note">请勿填写第三方服务登录密码；Session Token 将加密保存</p>
           <p v-if="submitError" class="submit-error" role="alert">{{ submitError }}</p>
-          <BaseButton type="submit" block :disabled="submitting">
+          <BaseButton type="submit" variant="accent" block :disabled="submitting">
             {{ submitting ? '提交中…' : '提交订单' }}
           </BaseButton>
         </form>

@@ -80,11 +80,10 @@ function logout() {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #f7f5f0;
-  background: oklch(0.98 0.008 85 / 0.92);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .header__inner {
@@ -107,25 +106,25 @@ function logout() {
 }
 
 .logo__mark {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-primary);
-  color: #f6faf8;
-  color: oklch(0.98 0.01 165);
-  font-family: var(--font-serif);
-  font-weight: 600;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 1rem;
   border-radius: var(--radius-sm);
+  box-shadow: 0 2px 8px rgb(37 99 235 / 30%);
 }
 
 .logo__text {
-  font-family: var(--font-serif);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 1.0625rem;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .menu-toggle {
@@ -210,8 +209,9 @@ function logout() {
 }
 
 .nav__link--active {
-  background: var(--color-primary-muted);
-  color: var(--color-primary-hover);
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 .nav__link--btn {

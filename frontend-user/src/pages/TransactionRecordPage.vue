@@ -214,7 +214,7 @@ onMounted(load)
 }
 
 .order-item__amount {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-weight: 600;
   color: var(--color-primary);
   flex-shrink: 0;
@@ -253,7 +253,7 @@ onMounted(load)
 }
 
 .empty__title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 1.125rem;
   color: var(--color-text-heading);
 }

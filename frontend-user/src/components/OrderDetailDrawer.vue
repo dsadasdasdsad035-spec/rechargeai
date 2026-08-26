@@ -279,7 +279,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
   position: absolute;
   inset: 0;
   border: none;
-  background: oklch(0.15 0.02 85 / 0.45);
+  background: rgb(15 23 42 / 45%);
   cursor: pointer;
 }
 
@@ -375,7 +375,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .detail-value--price {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 1.125rem;
   color: var(--color-primary);
 }

@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import http from '../services/http'
 
 const router = useRouter()
+const route = useRoute()
 const submitting = ref(false)
+const loading = ref(false)
+
+const productId = computed(() => {
+  const id = route.params.id
+  return typeof id === 'string' && id !== 'new' ? id : null
+})
+
+const isEdit = computed(() => productId.value != null)
+
 const defaultRequiredFieldsJson = JSON.stringify(
   [
     { key: 'target_account', label: 'AI 账号', type: 'text', required: false },
@@ -32,6 +42,62 @@ const form = ref({
   requiredFieldsJson: defaultRequiredFieldsJson,
 })
 
+function formatRequiredFieldsJson(raw: string | null | undefined) {
+  if (!raw) return defaultRequiredFieldsJson
+  try {
+    return JSON.stringify(JSON.parse(raw), null, 2)
+  } catch {
+    return raw
+  }
+}
+
+async function loadProduct() {
+  if (!productId.value) return
+  loading.value = true
+  try {
+    const { data } = await http.get(`/products/${productId.value}`)
+    const p = data.data
+    form.value = {
+      productCode: p.productCode ?? '',
+      name: p.name ?? '',
+      serviceType: p.serviceType ?? 'GENERAL',
+      officialPrice: p.officialPrice ?? undefined,
+      salePrice: p.salePrice ?? 0,
+      periodDays: p.periodDays ?? 30,
+      currency: p.currency ?? 'CNY',
+      status: p.status ?? 'OFF_SHELF',
+      estimatedHours: p.estimatedHours ?? undefined,
+      sortOrder: p.sortOrder ?? 0,
+      refundPolicyText: p.refundPolicyText ?? '',
+      complianceNotice: p.complianceNotice ?? '',
+      requiredFieldsJson: formatRequiredFieldsJson(p.requiredFieldsJson),
+    }
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message ?? '加载产品失败')
+    router.push('/products')
+  } finally {
+    loading.value = false
+  }
+}
+
+function buildPayload() {
+  return {
+    productCode: form.value.productCode.trim() || undefined,
+    name: form.value.name.trim(),
+    serviceType: form.value.serviceType,
+    officialPrice: form.value.officialPrice ?? null,
+    salePrice: form.value.salePrice,
+    periodDays: form.value.periodDays,
+    currency: form.value.currency,
+    status: form.value.status,
+    estimatedHours: form.value.estimatedHours ?? null,
+    sortOrder: form.value.sortOrder,
+    refundPolicyText: form.value.refundPolicyText.trim() || null,
+    complianceNotice: form.value.complianceNotice.trim() || null,
+    requiredFieldsJson: form.value.requiredFieldsJson.trim(),
+  }
+}
+
 async function submit() {
   if (!form.value.name.trim()) {
     ElMessage.warning('请填写产品名称')
@@ -52,37 +118,31 @@ async function submit() {
   }
   submitting.value = true
   try {
-    await http.post('/products', {
-      productCode: form.value.productCode.trim() || undefined,
-      name: form.value.name.trim(),
-      serviceType: form.value.serviceType,
-      officialPrice: form.value.officialPrice ?? null,
-      salePrice: form.value.salePrice,
-      periodDays: form.value.periodDays,
-      currency: form.value.currency,
-      status: form.value.status,
-      estimatedHours: form.value.estimatedHours ?? null,
-      sortOrder: form.value.sortOrder,
-      refundPolicyText: form.value.refundPolicyText.trim() || null,
-      complianceNotice: form.value.complianceNotice.trim() || null,
-      requiredFieldsJson: form.value.requiredFieldsJson.trim(),
-    })
-    ElMessage.success('产品已创建')
+    const payload = buildPayload()
+    if (isEdit.value) {
+      await http.put(`/products/${productId.value}`, payload)
+      ElMessage.success('产品已更新')
+    } else {
+      await http.post('/products', payload)
+      ElMessage.success('产品已创建')
+    }
     router.push('/products')
   } catch (e: any) {
-    ElMessage.error(e.response?.data?.message ?? '创建失败，请稍后重试')
+    ElMessage.error(e.response?.data?.message ?? '保存失败，请稍后重试')
   } finally {
     submitting.value = false
   }
 }
+
+onMounted(loadProduct)
 </script>
 
 <template>
-  <div class="admin-page">
+  <div v-loading="loading" class="admin-page">
     <header class="admin-page__header">
       <div class="admin-page__header-text">
         <el-button text :icon="ArrowLeft" @click="router.push('/products')">返回列表</el-button>
-        <h2 style="margin-top: 8px">新建产品</h2>
+        <h2 style="margin-top: 8px">{{ isEdit ? '编辑产品' : '新建产品' }}</h2>
         <p>填写产品基本信息、交付规则与用户下单字段</p>
       </div>
     </header>
@@ -97,7 +157,11 @@ async function submit() {
           </el-col>
           <el-col :xs="24" :md="12">
             <el-form-item label="产品编码">
-              <el-input v-model="form.productCode" placeholder="留空自动生成" />
+              <el-input
+                v-model="form.productCode"
+                :disabled="isEdit"
+                placeholder="留空自动生成"
+              />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -179,13 +243,17 @@ async function submit() {
           <el-input
             v-model="form.requiredFieldsJson"
             type="textarea"
-            :rows="8"
+            :rows="10"
             placeholder="配置用户下单时需要填写的字段"
           />
-          <p class="form-tip">Session Token 使用 type: "text"；AI 账号默认选填。</p>
+          <p class="form-tip">
+            默认含 AI 账号（选填）与 Session Token（必填，type 为 text）。编辑时会格式化展示完整 JSON。
+          </p>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="submitting" @click="submit">保存产品</el-button>
+          <el-button type="primary" :loading="submitting" @click="submit">
+            {{ isEdit ? '保存修改' : '保存产品' }}
+          </el-button>
           <el-button @click="router.push('/products')">取消</el-button>
         </el-form-item>
       </el-form>

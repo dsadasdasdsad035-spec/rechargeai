@@ -41,12 +41,18 @@ withDefaults(
 }
 
 .card--interactive:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-primary-muted);
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .card--interactive:active {
   transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.card--interactive:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 </style>

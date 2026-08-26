@@ -40,13 +40,18 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
 .field__input {
   min-height: 44px;
   padding: 0 var(--space-md);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
   color: var(--color-text-heading);
+  box-shadow: inset 0 1px 2px rgb(15 23 42 / 4%);
   transition:
     border-color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.field__input:hover {
+  border-color: var(--color-border-strong);
 }
 
 .field__input::placeholder {
@@ -56,6 +61,6 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
 .field__input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-muted);
+  box-shadow: var(--shadow-focus);
 }
 </style>
